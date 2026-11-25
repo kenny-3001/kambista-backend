@@ -9,4 +9,9 @@ export const envValidationSchema = Joi.object({
     .uri({ scheme: ['mongodb', 'mongodb+srv'] })
     .required(),
   CORS_ORIGIN: Joi.string().default('http://localhost:5173'),
+  JWT_SECRET: Joi.string().min(32).required(),
+  // Positive duration such as 900s, 15m, 1h or 1d.
+  JWT_EXPIRES_IN: Joi.string()
+    .pattern(/^[1-9]\d*[smhd]$/)
+    .default('1h'),
 });
