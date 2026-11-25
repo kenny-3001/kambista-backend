@@ -1,4 +1,5 @@
 import { EmailAlreadyRegisteredError } from '../../domain/errors/email-already-registered.error';
+import { assertValidPassword } from '../../domain/password-policy';
 import { User } from '../../domain/user';
 import { UserRepository } from '../../domain/user.repository';
 import { Email } from '../../domain/value-objects/email';
@@ -23,6 +24,7 @@ export class RegisterUserUseCase {
       throw new EmailAlreadyRegisteredError();
     }
 
+    assertValidPassword(command.password);
     const passwordHash = await this.passwordHasher.hash(command.password);
     const user = User.register({ name: command.name, email, passwordHash });
 

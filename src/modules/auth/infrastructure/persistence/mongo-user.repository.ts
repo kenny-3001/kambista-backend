@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { isDuplicateKeyError } from '../../../../shared/infrastructure/database/mongo-errors';
 import { EmailAlreadyRegisteredError } from '../../domain/errors/email-already-registered.error';
+import { UserNotFoundError } from '../../domain/errors/user-not-found.error';
 import { User } from '../../domain/user';
 import { UserRepository } from '../../domain/user.repository';
 import { Email } from '../../domain/value-objects/email';
@@ -36,6 +37,16 @@ export class MongoUserRepository extends UserRepository {
         throw new EmailAlreadyRegisteredError();
       }
       throw error;
+    }
+  }
+
+  async update(user: User): Promise<void> {
+    const { _id, ...fields } = UserMapper.toPersistence(user);
+    const { matchedCount } = await this.userModel
+      .updateOne({ _id }, { $set: fields })
+      .exec();
+    if (matchedCount === 0) {
+      throw new UserNotFoundError();
     }
   }
 }

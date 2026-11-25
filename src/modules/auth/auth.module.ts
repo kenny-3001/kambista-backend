@@ -5,6 +5,7 @@ import { JwtModule, JwtSignOptions } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PasswordHasher } from './application/ports/password-hasher';
 import { TokenService } from './application/ports/token-service';
+import { EnsureAdminUserUseCase } from './application/use-cases/ensure-admin-user.use-case';
 import { LoginUserUseCase } from './application/use-cases/login-user.use-case';
 import { RegisterUserUseCase } from './application/use-cases/register-user.use-case';
 import { UserRepository } from './domain/user.repository';
@@ -60,6 +61,14 @@ import { RolesGuard } from './presentation/guards/roles.guard';
       ) => new LoginUserUseCase(users, hasher, tokens),
       inject: [UserRepository, PasswordHasher, TokenService],
     },
+    {
+      provide: EnsureAdminUserUseCase,
+      useFactory: (users: UserRepository, hasher: PasswordHasher) =>
+        new EnsureAdminUserUseCase(users, hasher),
+      inject: [UserRepository, PasswordHasher],
+    },
   ],
+  // Used by the seed:admin script.
+  exports: [EnsureAdminUserUseCase],
 })
 export class AuthModule {}

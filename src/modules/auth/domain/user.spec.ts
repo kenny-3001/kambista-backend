@@ -44,6 +44,15 @@ describe('User', () => {
     });
   });
 
+  it('can be promoted to admin', () => {
+    const user = User.register({ name: 'Juan', email, passwordHash: 'h' });
+
+    user.promoteToAdmin();
+
+    expect(user.role).toBe(Role.ADMIN);
+    expect(user.isAdmin()).toBe(true);
+  });
+
   it('recognizes an admin restored from persistence', () => {
     const admin = User.restore({
       id: '1',

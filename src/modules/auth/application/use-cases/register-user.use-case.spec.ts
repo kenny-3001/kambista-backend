@@ -1,5 +1,6 @@
 import { EmailAlreadyRegisteredError } from '../../domain/errors/email-already-registered.error';
 import { InvalidEmailError } from '../../domain/errors/invalid-email.error';
+import { InvalidPasswordError } from '../../domain/errors/invalid-password.error';
 import { Role } from '../../domain/role';
 import { FakePasswordHasher } from '../../testing/fake-password-hasher';
 import { InMemoryUserRepository } from '../../testing/in-memory-user.repository';
@@ -43,6 +44,13 @@ describe('RegisterUserUseCase', () => {
       registerUser.execute({ ...command, email: 'JUAN@example.com' }),
     ).rejects.toThrow(EmailAlreadyRegisteredError);
     expect(users.users.size).toBe(1);
+  });
+
+  it('enforces the password policy even without the HTTP validation layer', async () => {
+    await expect(
+      registerUser.execute({ ...command, password: 'corta' }),
+    ).rejects.toThrow(InvalidPasswordError);
+    expect(users.users.size).toBe(0);
   });
 
   it('rejects an invalid email without persisting anything', async () => {

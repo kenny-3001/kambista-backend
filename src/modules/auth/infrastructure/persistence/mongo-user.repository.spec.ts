@@ -1,6 +1,7 @@
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose, { Model } from 'mongoose';
 import { EmailAlreadyRegisteredError } from '../../domain/errors/email-already-registered.error';
+import { UserNotFoundError } from '../../domain/errors/user-not-found.error';
 import { Role } from '../../domain/role';
 import { User } from '../../domain/user';
 import { Email } from '../../domain/value-objects/email';
@@ -59,6 +60,25 @@ describe('MongoUserRepository (integration)', () => {
     await expect(
       repository.findByEmail(Email.create('nadie@example.com')),
     ).resolves.toBeNull();
+  });
+
+  it('persists changes made to an existing user', async () => {
+    const user = newUser();
+    await repository.create(user);
+
+    user.promoteToAdmin();
+    await repository.update(user);
+
+    const found = await repository.findByEmail(user.email);
+    expect(found!.role).toBe(Role.ADMIN);
+    expect(found!.passwordHash).toBe('hash');
+    expect(await userModel.countDocuments()).toBe(1);
+  });
+
+  it('fails loudly when updating a user that does not exist', async () => {
+    await expect(repository.update(newUser())).rejects.toThrow(
+      UserNotFoundError,
+    );
   });
 
   it('translates a duplicate email into a domain error', async () => {

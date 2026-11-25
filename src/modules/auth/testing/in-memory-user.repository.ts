@@ -1,3 +1,4 @@
+import { UserNotFoundError } from '../domain/errors/user-not-found.error';
 import { User } from '../domain/user';
 import { UserRepository } from '../domain/user.repository';
 import { Email } from '../domain/value-objects/email';
@@ -11,6 +12,14 @@ export class InMemoryUserRepository extends UserRepository {
   }
 
   create(user: User): Promise<void> {
+    this.users.set(user.id, user);
+    return Promise.resolve();
+  }
+
+  update(user: User): Promise<void> {
+    if (!this.users.has(user.id)) {
+      return Promise.reject(new UserNotFoundError());
+    }
     this.users.set(user.id, user);
     return Promise.resolve();
   }

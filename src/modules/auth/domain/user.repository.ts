@@ -9,4 +9,5 @@ import { Email } from './value-objects/email';
 export abstract class UserRepository {
   abstract findByEmail(email: Email): Promise<User | null>;
   abstract create(user: User): Promise<void>;
+  abstract update(user: User): Promise<void>;
 }

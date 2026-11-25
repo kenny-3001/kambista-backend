@@ -68,4 +68,9 @@ export class User {
   isAdmin(): boolean {
     return this.props.role === Role.ADMIN;
   }
+
+  /** Admins are never self-registered; they are granted from the back office. */
+  promoteToAdmin(): void {
+    this.props.role = Role.ADMIN;
+  }
 }
