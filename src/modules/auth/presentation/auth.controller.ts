@@ -1,10 +1,12 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { LoginUserUseCase } from '../application/use-cases/login-user.use-case';
 import { RegisterUserUseCase } from '../application/use-cases/register-user.use-case';
+import { Public } from './decorators/public.decorator';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { toUserResponse, UserResponse } from './user.response';
 
+@Public()
 @Controller('auth')
 export class AuthController {
   constructor(

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { JwtModule, JwtSignOptions } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PasswordHasher } from './application/ports/password-hasher';
@@ -15,6 +16,8 @@ import {
 import { BcryptPasswordHasher } from './infrastructure/security/bcrypt-password-hasher';
 import { JwtTokenService } from './infrastructure/security/jwt-token.service';
 import { AuthController } from './presentation/auth.controller';
+import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
+import { RolesGuard } from './presentation/guards/roles.guard';
 
 @Module({
   imports: [
@@ -38,6 +41,9 @@ import { AuthController } from './presentation/auth.controller';
     { provide: UserRepository, useClass: MongoUserRepository },
     { provide: PasswordHasher, useClass: BcryptPasswordHasher },
     { provide: TokenService, useClass: JwtTokenService },
+    // Global guards run in registration order: authenticate, then authorize.
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
     // Use cases are plain classes; Nest only wires their dependencies.
     {
       provide: RegisterUserUseCase,
