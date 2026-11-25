@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_PIPE } from '@nestjs/core';
 import { AuthModule } from './modules/auth/auth.module';
 import { ExchangeRateModule } from './modules/exchange-rate/exchange-rate.module';
+import { TransactionsModule } from './modules/transactions/transactions.module';
 import { envValidationSchema } from './shared/infrastructure/config/env.validation';
 import { DatabaseModule } from './shared/infrastructure/database/database.module';
 import { DomainExceptionFilter } from './shared/presentation/filters/domain-exception.filter';
@@ -16,6 +17,7 @@ import { DomainExceptionFilter } from './shared/presentation/filters/domain-exce
     DatabaseModule,
     AuthModule,
     ExchangeRateModule,
+    TransactionsModule,
   ],
   providers: [
     {
