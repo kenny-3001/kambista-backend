@@ -2,8 +2,10 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ExchangeRateProvider } from './application/ports/exchange-rate-provider';
+import { GetCurrentExchangeRateUseCase } from './application/use-cases/get-current-exchange-rate.use-case';
 import { RefreshExchangeRateUseCase } from './application/use-cases/refresh-exchange-rate.use-case';
 import { ExchangeRateRepository } from './domain/exchange-rate.repository';
+import { CachedExchangeRateRepository } from './infrastructure/persistence/cached-exchange-rate.repository';
 import {
   ExchangeRateDocument,
   ExchangeRateSchema,
@@ -19,7 +21,14 @@ import { ExchangeRateRefreshScheduler } from './infrastructure/scheduling/exchan
     ]),
   ],
   providers: [
-    { provide: ExchangeRateRepository, useClass: MongoExchangeRateRepository },
+    MongoExchangeRateRepository,
+    {
+      // Everyone reads and writes through the in-memory cache.
+      provide: ExchangeRateRepository,
+      useFactory: (mongo: MongoExchangeRateRepository) =>
+        new CachedExchangeRateRepository(mongo),
+      inject: [MongoExchangeRateRepository],
+    },
     {
       provide: ExchangeRateProvider,
       useFactory: (config: ConfigService) =>
@@ -38,6 +47,12 @@ import { ExchangeRateRefreshScheduler } from './infrastructure/scheduling/exchan
       inject: [ExchangeRateProvider, ExchangeRateRepository],
     },
     {
+      provide: GetCurrentExchangeRateUseCase,
+      useFactory: (rates: ExchangeRateRepository) =>
+        new GetCurrentExchangeRateUseCase(rates),
+      inject: [ExchangeRateRepository],
+    },
+    {
       provide: ExchangeRateRefreshScheduler,
       useFactory: (
         refreshExchangeRate: RefreshExchangeRateUseCase,
@@ -50,5 +65,7 @@ import { ExchangeRateRefreshScheduler } from './infrastructure/scheduling/exchan
       inject: [RefreshExchangeRateUseCase, ConfigService],
     },
   ],
+  // Transactions read the current rate through this use case.
+  exports: [GetCurrentExchangeRateUseCase],
 })
 export class ExchangeRateModule {}

@@ -83,6 +83,7 @@ describe('ApisNetPeExchangeRateProvider', () => {
       },
     ],
     ['a non-object body', [1, 2, 3]],
+    ['a null body', null],
   ])('reports %s as an unexpected format', async (_label, body) => {
     fetchMock.mockResolvedValue(jsonResponse(body));
 

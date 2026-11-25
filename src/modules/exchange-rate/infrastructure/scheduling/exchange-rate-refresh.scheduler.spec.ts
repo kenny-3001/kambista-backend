@@ -94,4 +94,21 @@ describe('ExchangeRateRefreshScheduler', () => {
     await jest.advanceTimersByTimeAsync(INTERVAL_MS * 5);
     expect(provider.calls).toBe(1);
   });
+
+  it('survives a failure that is not an Error instance', async () => {
+    jest
+      .spyOn(provider, 'fetchCurrent')
+      .mockImplementationOnce(() => Promise.reject(new Error('x')))
+      // Simulates a third-party library rejecting with a plain value.
+      .mockImplementationOnce(() => {
+        throw 'unexpected failure'; // eslint-disable-line @typescript-eslint/only-throw-error
+      });
+
+    scheduler.onApplicationBootstrap();
+    await jest.advanceTimersByTimeAsync(INTERVAL_MS);
+
+    expect(warn).toHaveBeenLastCalledWith(
+      'unexpected failure. Se mantiene el último tipo de cambio guardado.',
+    );
+  });
 });

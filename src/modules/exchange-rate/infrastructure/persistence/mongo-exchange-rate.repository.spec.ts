@@ -1,6 +1,7 @@
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose, { Model } from 'mongoose';
 import { ExchangeRate } from '../../domain/exchange-rate';
+import { CachedExchangeRateRepository } from './cached-exchange-rate.repository';
 import {
   ExchangeRateDocument,
   ExchangeRateSchema,
@@ -62,5 +63,26 @@ describe('MongoExchangeRateRepository (integration)', () => {
     await repository.save(rateFetchedAt('2024-01-18T15:00:30Z'));
 
     expect(await rateModel.countDocuments()).toBe(2);
+  });
+
+  describe('behind the in-memory cache', () => {
+    it('loads the stored rate after a restart, then stops querying MongoDB', async () => {
+      await repository.save(rateFetchedAt('2024-01-18T15:00:00Z', 3.74));
+      // A fresh cache simulates an API restart with data already stored.
+      const cached = new CachedExchangeRateRepository(repository);
+      const findOne = jest.spyOn(rateModel, 'findOne');
+
+      for (let i = 0; i < 10; i++) {
+        expect((await cached.findLatest())!.sell).toBe(3.74);
+      }
+      expect(findOne).toHaveBeenCalledTimes(1);
+
+      await cached.save(rateFetchedAt('2024-01-18T15:00:30Z', 3.75));
+      expect((await cached.findLatest())!.sell).toBe(3.75);
+      expect(findOne).toHaveBeenCalledTimes(1);
+      expect(await rateModel.countDocuments()).toBe(2);
+
+      findOne.mockRestore();
+    });
   });
 });
