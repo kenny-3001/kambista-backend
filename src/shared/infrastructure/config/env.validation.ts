@@ -14,4 +14,12 @@ export const envValidationSchema = Joi.object({
   JWT_EXPIRES_IN: Joi.string()
     .pattern(/^[1-9]\d*[smhd]$/)
     .default('1h'),
+  EXCHANGE_RATE_API_URL: Joi.string()
+    .uri({ scheme: ['http', 'https'] })
+    .default('https://api.apis.net.pe/v1/tipo-cambio-sunat'),
+  EXCHANGE_RATE_REFRESH_INTERVAL_MS: Joi.number()
+    .integer()
+    .min(1000)
+    .default(30_000),
+  EXCHANGE_RATE_TIMEOUT_MS: Joi.number().integer().min(100).default(5_000),
 });
