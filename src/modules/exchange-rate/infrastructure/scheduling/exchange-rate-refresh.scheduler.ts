@@ -48,8 +48,10 @@ export class ExchangeRateRefreshScheduler
       }
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
+      // Accurate both before the first rate exists and after: the cache
+      // keeps serving whatever was last stored, if anything.
       this.logger.warn(
-        `${reason}. Se mantiene el último tipo de cambio guardado.`,
+        `${reason}. Se reintentará en ${this.intervalMs / 1000} s; mientras tanto se usa el último tipo de cambio guardado, si existe.`,
       );
     } finally {
       this.refreshing = false;

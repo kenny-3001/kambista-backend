@@ -57,7 +57,9 @@ describe('ExchangeRateRefreshScheduler', () => {
     await jest.advanceTimersByTimeAsync(INTERVAL_MS);
 
     expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining('Se mantiene el último tipo de cambio guardado'),
+      expect.stringContaining(
+        'Se reintentará en 30 s; mientras tanto se usa el último tipo de cambio guardado, si existe.',
+      ),
     );
     expect(rates.rates).toHaveLength(1);
 
@@ -108,7 +110,7 @@ describe('ExchangeRateRefreshScheduler', () => {
     await jest.advanceTimersByTimeAsync(INTERVAL_MS);
 
     expect(warn).toHaveBeenLastCalledWith(
-      'unexpected failure. Se mantiene el último tipo de cambio guardado.',
+      'unexpected failure. Se reintentará en 30 s; mientras tanto se usa el último tipo de cambio guardado, si existe.',
     );
   });
 });
