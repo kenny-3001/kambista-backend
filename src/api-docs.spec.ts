@@ -2,6 +2,8 @@ import { INestApplication } from '@nestjs/common';
 import { OpenAPIObject } from '@nestjs/swagger';
 import { Test } from '@nestjs/testing';
 import { LoginUserUseCase } from './modules/auth/application/use-cases/login-user.use-case';
+import { LogoutUseCase } from './modules/auth/application/use-cases/logout.use-case';
+import { RefreshSessionUseCase } from './modules/auth/application/use-cases/refresh-session.use-case';
 import { RegisterUserUseCase } from './modules/auth/application/use-cases/register-user.use-case';
 import { AuthController } from './modules/auth/presentation/auth.controller';
 import { GetCurrentExchangeRateUseCase } from './modules/exchange-rate/application/use-cases/get-current-exchange-rate.use-case';
@@ -42,6 +44,8 @@ describe('API documentation (Swagger)', () => {
         // Only the routes and their metadata matter here.
         { provide: RegisterUserUseCase, useValue: {} },
         { provide: LoginUserUseCase, useValue: {} },
+        { provide: RefreshSessionUseCase, useValue: {} },
+        { provide: LogoutUseCase, useValue: {} },
         { provide: GetCurrentExchangeRateUseCase, useValue: {} },
         { provide: CreateTransactionUseCase, useValue: {} },
         { provide: GetTransactionHistoryUseCase, useValue: {} },
@@ -69,6 +73,8 @@ describe('API documentation (Swagger)', () => {
   it('documents every endpoint under /v1', () => {
     expect(Object.keys(document.paths).sort()).toEqual([
       '/v1/auth/login',
+      '/v1/auth/logout',
+      '/v1/auth/refresh',
       '/v1/auth/register',
       '/v1/exchange-rate',
       '/v1/transactions',
@@ -91,6 +97,8 @@ describe('API documentation (Swagger)', () => {
       { bearer: [] },
     ]);
     expect(operation('/v1/auth/login', 'post').security).toBeUndefined();
+    expect(operation('/v1/auth/refresh', 'post').security).toBeUndefined();
+    expect(operation('/v1/auth/logout', 'post').security).toBeUndefined();
   });
 
   it('describes the response fields with the names of the statement', () => {
@@ -102,7 +110,11 @@ describe('API documentation (Swagger)', () => {
         )?.properties ?? {},
       );
 
-    expect(propertiesOf('LoginResponse')).toEqual(['access_token', 'usuario']);
+    expect(propertiesOf('LoginResponse')).toEqual([
+      'access_token',
+      'refresh_token',
+      'usuario',
+    ]);
     expect(propertiesOf('UserResponse')).toEqual([
       'id',
       'nombre',
@@ -173,6 +185,12 @@ describe('API documentation (Swagger)', () => {
     expect(errorCodes(operation('/v1/auth/login', 'post'), '401')).toEqual([
       'INVALID_CREDENTIALS',
     ]);
+    expect(errorCodes(operation('/v1/auth/refresh', 'post'), '401')).toEqual([
+      'INVALID_REFRESH_TOKEN',
+    ]);
+    expect(
+      Object.keys(operation('/v1/auth/logout', 'post').responses),
+    ).toContain('204');
     expect(errorCodes(operation('/v1/auth/login', 'post'), '429')).toEqual([
       'TOO_MANY_LOGIN_ATTEMPTS',
     ]);

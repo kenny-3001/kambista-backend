@@ -5,7 +5,10 @@ import { UserRepository } from '../../domain/user.repository';
 import { Email } from '../../domain/value-objects/email';
 import { LoginAttemptCounter } from '../ports/login-attempt-counter';
 import { PasswordHasher } from '../ports/password-hasher';
-import { TokenService } from '../ports/token-service';
+import {
+  SessionTokenIssuer,
+  SessionTokens,
+} from '../services/session-token-issuer';
 
 export interface LoginUserCommand {
   email: string;
@@ -14,8 +17,7 @@ export interface LoginUserCommand {
   clientIp: string;
 }
 
-export interface LoginUserResult {
-  accessToken: string;
+export interface LoginUserResult extends SessionTokens {
   user: User;
 }
 
@@ -29,7 +31,7 @@ export class LoginUserUseCase {
   constructor(
     private readonly users: UserRepository,
     private readonly passwordHasher: PasswordHasher,
-    private readonly tokenService: TokenService,
+    private readonly issuer: SessionTokenIssuer,
     private readonly attempts: LoginAttemptCounter,
     private readonly policy: LoginAttemptPolicy,
     private readonly now: () => Date = () => new Date(),
@@ -63,13 +65,9 @@ export class LoginUserUseCase {
     const user = await this.authenticate(email, command.password);
     await this.attempts.reset(attemptKey);
 
-    const accessToken = await this.tokenService.signAccessToken({
-      sub: user.id,
-      email: user.email.value,
-      role: user.role,
-    });
-
-    return { accessToken, user };
+    // Every login starts a new session (its own refresh token family).
+    const tokens = await this.issuer.issue(user, now);
+    return { ...tokens, user };
   }
 
   private async authenticate(email: Email, password: string): Promise<User> {

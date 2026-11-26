@@ -19,6 +19,14 @@ export class MongoUserRepository extends UserRepository {
     super();
   }
 
+  async findById(id: string): Promise<User | null> {
+    const document = await this.userModel
+      .findById(id)
+      .lean<UserDocument>()
+      .exec();
+    return document ? UserMapper.toDomain(document) : null;
+  }
+
   async findByEmail(email: Email): Promise<User | null> {
     const document = await this.userModel
       .findOne({ email: email.value })

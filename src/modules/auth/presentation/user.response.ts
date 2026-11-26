@@ -29,8 +29,27 @@ export class LoginResponse {
   })
   access_token!: string;
 
+  @ApiProperty({
+    description:
+      'Token para renovar la sesión con POST /v1/auth/refresh. Sirve una sola vez: cada renovación entrega uno nuevo',
+    example: 'oN3cX0w9lq2P7k1sR8tY4uV6bZ5aE0dF2gH3jK4lM6n',
+  })
+  refresh_token!: string;
+
   @ApiProperty({ type: UserResponse })
   usuario!: UserResponse;
+}
+
+export function toLoginResponse(
+  accessToken: string,
+  refreshToken: string,
+  user: User,
+): LoginResponse {
+  return {
+    access_token: accessToken,
+    refresh_token: refreshToken,
+    usuario: toUserResponse(user),
+  };
 }
 
 export function toUserResponse(user: User): UserResponse {

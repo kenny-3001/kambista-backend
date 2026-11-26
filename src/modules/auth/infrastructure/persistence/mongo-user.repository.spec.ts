@@ -62,6 +62,17 @@ describe('MongoUserRepository (integration)', () => {
     ).resolves.toBeNull();
   });
 
+  it('finds a user by id', async () => {
+    const user = newUser();
+    await repository.create(user);
+
+    await expect(repository.findById(user.id)).resolves.toMatchObject({
+      id: user.id,
+      name: 'Juan Pérez',
+    });
+    await expect(repository.findById('no-existe')).resolves.toBeNull();
+  });
+
   it('persists changes made to an existing user', async () => {
     const user = newUser();
     await repository.create(user);

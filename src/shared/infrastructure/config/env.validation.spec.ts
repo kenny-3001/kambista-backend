@@ -19,7 +19,8 @@ describe('envValidationSchema', () => {
       NODE_ENV: 'development',
       PORT: 3000,
       CORS_ORIGIN: 'http://localhost:5173',
-      JWT_EXPIRES_IN: '1h',
+      JWT_EXPIRES_IN: '15m',
+      REFRESH_TOKEN_EXPIRES_IN_DAYS: 7,
       LOGIN_MAX_FAILED_ATTEMPTS: 5,
       LOGIN_ATTEMPTS_WINDOW_MINUTES: 15,
       EXCHANGE_RATE_API_URL: 'https://api.apis.net.pe/v1/tipo-cambio-sunat',
@@ -56,6 +57,14 @@ describe('envValidationSchema', () => {
     [
       'a provider timeout longer than a timer allows',
       { EXCHANGE_RATE_TIMEOUT_MS: 3_000_000_000 },
+    ],
+    [
+      'a refresh token lifetime of zero days',
+      { REFRESH_TOKEN_EXPIRES_IN_DAYS: 0 },
+    ],
+    [
+      'a refresh token lifetime over 90 days',
+      { REFRESH_TOKEN_EXPIRES_IN_DAYS: 91 },
     ],
     ['no allowed login attempts', { LOGIN_MAX_FAILED_ATTEMPTS: 0 }],
     ['a fractional login limit', { LOGIN_MAX_FAILED_ATTEMPTS: 2.5 }],

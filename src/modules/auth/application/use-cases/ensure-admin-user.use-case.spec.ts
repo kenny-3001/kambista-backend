@@ -4,11 +4,15 @@ import { Role } from '../../domain/role';
 import { User } from '../../domain/user';
 import { Email } from '../../domain/value-objects/email';
 import { FakePasswordHasher } from '../../testing/fake-password-hasher';
+import { RefreshToken } from '../../domain/refresh-token';
+import { InMemoryRefreshTokenRepository } from '../../testing/in-memory-refresh-token.repository';
 import { InMemoryUserRepository } from '../../testing/in-memory-user.repository';
 import { EnsureAdminUserUseCase } from './ensure-admin-user.use-case';
 
 describe('EnsureAdminUserUseCase', () => {
+  const NOW = new Date('2024-01-18T15:00:00Z');
   let users: InMemoryUserRepository;
+  let refreshTokens: InMemoryRefreshTokenRepository;
   let ensureAdmin: EnsureAdminUserUseCase;
 
   const command = {
@@ -19,7 +23,13 @@ describe('EnsureAdminUserUseCase', () => {
 
   beforeEach(() => {
     users = new InMemoryUserRepository();
-    ensureAdmin = new EnsureAdminUserUseCase(users, new FakePasswordHasher());
+    refreshTokens = new InMemoryRefreshTokenRepository();
+    ensureAdmin = new EnsureAdminUserUseCase(
+      users,
+      new FakePasswordHasher(),
+      refreshTokens,
+      () => NOW,
+    );
   });
 
   it('creates an admin when the email is not registered', async () => {
@@ -50,6 +60,36 @@ describe('EnsureAdminUserUseCase', () => {
     // Whoever registered the admin email first must not keep access.
     expect(user.passwordHash).toBe('hashed:Admin12345');
     expect(users.users.size).toBe(1);
+  });
+
+  it('closes every session the promoted user already had', async () => {
+    const existing = User.register({
+      name: 'Juan',
+      email: Email.create('admin@example.com'),
+      passwordHash: 'hashed:original-password',
+    });
+    await users.create(existing);
+    const issue = (userId: string, tokenHash: string) =>
+      refreshTokens.save(
+        RefreshToken.issue({
+          userId,
+          tokenHash,
+          now: NOW,
+          ttlMs: 60_000,
+        }),
+      );
+    // Obtained before the seed by whoever registered the admin email.
+    await issue(existing.id, 'attacker-session');
+    await issue('another-user', 'unrelated-session');
+
+    await ensureAdmin.execute(command);
+
+    expect(
+      (await refreshTokens.findByHash('attacker-session'))?.revokedAt,
+    ).toEqual(NOW);
+    expect(
+      (await refreshTokens.findByHash('unrelated-session'))?.revokedAt,
+    ).toBeNull();
   });
 
   it('rejects a weak password before promoting an existing user', async () => {

@@ -4,9 +4,12 @@ import { Role } from '../../domain/role';
 import { User } from '../../domain/user';
 import { Email } from '../../domain/value-objects/email';
 import { FakePasswordHasher } from '../../testing/fake-password-hasher';
+import { FakeRefreshTokenGenerator } from '../../testing/fake-refresh-token-generator';
 import { FakeTokenService } from '../../testing/fake-token-service';
 import { InMemoryLoginAttemptCounter } from '../../testing/in-memory-login-attempt-counter';
+import { InMemoryRefreshTokenRepository } from '../../testing/in-memory-refresh-token.repository';
 import { InMemoryUserRepository } from '../../testing/in-memory-user.repository';
+import { SessionTokenIssuer } from '../services/session-token-issuer';
 import { LoginUserUseCase } from './login-user.use-case';
 
 describe('LoginUserUseCase', () => {
@@ -17,6 +20,7 @@ describe('LoginUserUseCase', () => {
   let attempts: InMemoryLoginAttemptCounter;
   let hasher: FakePasswordHasher;
   let tokens: FakeTokenService;
+  let refreshTokens: InMemoryRefreshTokenRepository;
   let loginUser: LoginUserUseCase;
   let juan: User;
 
@@ -24,12 +28,18 @@ describe('LoginUserUseCase', () => {
     users = new InMemoryUserRepository();
     hasher = new FakePasswordHasher();
     tokens = new FakeTokenService();
+    refreshTokens = new InMemoryRefreshTokenRepository();
     attempts = new InMemoryLoginAttemptCounter();
     now = new Date('2024-01-18T15:00:00Z');
     loginUser = new LoginUserUseCase(
       users,
       hasher,
-      tokens,
+      new SessionTokenIssuer(
+        tokens,
+        new FakeRefreshTokenGenerator(),
+        refreshTokens,
+        7 * 24 * 60 * 60_000,
+      ),
       attempts,
       POLICY,
       () => now,
@@ -43,7 +53,7 @@ describe('LoginUserUseCase', () => {
     await users.create(juan);
   });
 
-  it('returns an access token and the user for valid credentials', async () => {
+  it('returns an access token, a refresh token and the user for valid credentials', async () => {
     const result = await loginUser.execute({
       email: 'juan@example.com',
       password: 'contraseña123',
@@ -51,7 +61,25 @@ describe('LoginUserUseCase', () => {
     });
 
     expect(result.accessToken).toBe(`token-for:${juan.id}`);
+    expect(result.refreshToken).toBe('refresh-1');
     expect(result.user).toBe(juan);
+  });
+
+  it('starts a new session on every login', async () => {
+    const login = () =>
+      loginUser.execute({
+        email: 'juan@example.com',
+        password: 'contraseña123',
+        clientIp: IP,
+      });
+
+    await login();
+    await login();
+
+    const stored = [...refreshTokens.tokens.values()];
+    expect(stored).toHaveLength(2);
+    expect(stored[0].familyId).not.toBe(stored[1].familyId);
+    expect(stored.every((t) => t.userId === juan.id)).toBe(true);
   });
 
   it('signs the token with the user id, email and role', async () => {
@@ -71,6 +99,7 @@ describe('LoginUserUseCase', () => {
       loginUser.execute({
         email: 'JUAN@Example.com',
         password: 'contraseña123',
+        clientIp: IP,
       }),
     ).resolves.toMatchObject({ user: juan });
   });
@@ -91,9 +120,11 @@ describe('LoginUserUseCase', () => {
       loginUser.execute({
         email: 'nadie@example.com',
         password: 'contraseña123',
+        clientIp: IP,
       }),
     ).rejects.toThrow(InvalidCredentialsError);
     expect(tokens.issued).toHaveLength(0);
+    expect(refreshTokens.tokens.size).toBe(0);
   });
 
   it('still spends hashing time when the email is unknown', async () => {

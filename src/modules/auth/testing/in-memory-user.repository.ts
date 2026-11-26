@@ -6,6 +6,10 @@ import { Email } from '../domain/value-objects/email';
 export class InMemoryUserRepository extends UserRepository {
   readonly users = new Map<string, User>();
 
+  findById(id: string): Promise<User | null> {
+    return Promise.resolve(this.users.get(id) ?? null);
+  }
+
   findByEmail(email: Email): Promise<User | null> {
     const user = [...this.users.values()].find((u) => u.email.equals(email));
     return Promise.resolve(user ?? null);

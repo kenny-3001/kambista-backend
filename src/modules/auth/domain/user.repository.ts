@@ -7,6 +7,7 @@ import { Email } from './value-objects/email';
  * to the framework.
  */
 export abstract class UserRepository {
+  abstract findById(id: string): Promise<User | null>;
   abstract findByEmail(email: Email): Promise<User | null>;
   abstract create(user: User): Promise<void>;
   abstract update(user: User): Promise<void>;

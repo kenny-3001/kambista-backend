@@ -29,7 +29,14 @@ export const envValidationSchema = Joi.object({
   // Positive duration such as 900s, 15m, 1h or 1d.
   JWT_EXPIRES_IN: Joi.string()
     .pattern(/^[1-9]\d*[smhd]$/)
-    .default('1h'),
+    .default('15m'),
+  // Lifetime of a refresh token; each refresh issues a new one, so a
+  // session ends after this many days without use.
+  REFRESH_TOKEN_EXPIRES_IN_DAYS: Joi.number()
+    .integer()
+    .min(1)
+    .max(90)
+    .default(7),
   // Brute-force protection: failed logins allowed per email and IP within
   // one window; the next attempt is rejected until the window ends.
   LOGIN_MAX_FAILED_ATTEMPTS: Joi.number().integer().min(1).max(100).default(5),
