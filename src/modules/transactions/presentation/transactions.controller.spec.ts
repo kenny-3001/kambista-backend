@@ -1,9 +1,10 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import type { App } from 'supertest/types';
-import { DomainExceptionFilter } from '../../../shared/presentation/filters/domain-exception.filter';
+import { ApiExceptionFilter } from '../../../shared/presentation/filters/api-exception.filter';
+import { createValidationPipe } from '../../../shared/presentation/validation/create-validation-pipe';
 import { TokenService } from '../../auth/application/ports/token-service';
 import { Role } from '../../auth/domain/role';
 import { JwtAuthGuard } from '../../auth/presentation/guards/jwt-auth.guard';
@@ -58,15 +59,8 @@ describe('TransactionsController (integration)', () => {
         },
         { provide: TokenService, useValue: tokens },
         { provide: APP_GUARD, useClass: JwtAuthGuard },
-        {
-          provide: APP_PIPE,
-          useValue: new ValidationPipe({
-            whitelist: true,
-            transform: true,
-            stopAtFirstError: true,
-          }),
-        },
-        { provide: APP_FILTER, useClass: DomainExceptionFilter },
+        { provide: APP_PIPE, useValue: createValidationPipe() },
+        { provide: APP_FILTER, useClass: ApiExceptionFilter },
       ],
     }).compile();
 
@@ -178,7 +172,7 @@ describe('TransactionsController (integration)', () => {
     ])('rejects %s with a clear message', async (_label, override, message) => {
       const res = await post({ ...validBody, ...override }).expect(400);
 
-      expect(res.body).toMatchObject({ message: [message] });
+      expect(res.body).toMatchObject({ error: 'VALIDATION_ERROR', message });
       expect(transactions.transactions).toHaveLength(0);
     });
   });
@@ -314,7 +308,7 @@ describe('TransactionsController (integration)', () => {
     ])('rejects %s with a clear message', async (_label, query, message) => {
       const res = await history(query).expect(400);
 
-      expect(res.body).toMatchObject({ message: [message] });
+      expect(res.body).toMatchObject({ error: 'VALIDATION_ERROR', message });
     });
 
     it.each([

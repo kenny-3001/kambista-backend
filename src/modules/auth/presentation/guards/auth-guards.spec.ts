@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import type { App } from 'supertest/types';
-import { DomainExceptionFilter } from '../../../../shared/presentation/filters/domain-exception.filter';
+import { ApiExceptionFilter } from '../../../../shared/presentation/filters/api-exception.filter';
 import type { AuthenticatedUser } from '../../application/authenticated-user';
 import { TokenService } from '../../application/ports/token-service';
 import { Role } from '../../domain/role';
@@ -63,7 +63,7 @@ describe('JwtAuthGuard + RolesGuard (integration)', () => {
         { provide: TokenService, useClass: JwtTokenService },
         { provide: APP_GUARD, useClass: JwtAuthGuard },
         { provide: APP_GUARD, useClass: RolesGuard },
-        { provide: APP_FILTER, useClass: DomainExceptionFilter },
+        { provide: APP_FILTER, useClass: ApiExceptionFilter },
       ],
     }).compile();
 
