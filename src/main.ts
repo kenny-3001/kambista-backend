@@ -5,6 +5,10 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { TOTAL_COUNT_HEADER } from './modules/transactions/presentation/transactions.controller';
 import { describeStartupError } from './shared/infrastructure/startup/describe-startup-error';
+import {
+  setupSwagger,
+  SWAGGER_PATH,
+} from './shared/presentation/swagger/setup-swagger';
 
 const logger = new Logger('Bootstrap');
 
@@ -25,10 +29,12 @@ async function bootstrap() {
     exposedHeaders: [TOTAL_COUNT_HEADER],
   });
   app.enableShutdownHooks();
+  setupSwagger(app);
 
   const port = config.get<number>('PORT', 3000);
   await app.listen(port);
   logger.log(`API running on http://localhost:${port}/v1`);
+  logger.log(`API docs on http://localhost:${port}/${SWAGGER_PATH}`);
 }
 
 bootstrap().catch((error: unknown) => {

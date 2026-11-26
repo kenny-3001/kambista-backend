@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { IsDefined, IsIn, IsNumber, IsPositive, Max } from 'class-validator';
 import { SUPPORTED_CURRENCIES } from '../../domain/currency';
 import {
@@ -11,18 +12,36 @@ import { MaxDecimalPlaces } from './max-decimal-places.validator';
 // error, so the most basic check (presence) sits closest to the property.
 // The domain enforces the same rules; these give early, field-level errors.
 export class CreateTransactionDto {
+  @ApiProperty({
+    enum: SUPPORTED_CURRENCIES,
+    example: 'USD',
+    description: 'Moneda que envía el cliente',
+  })
   @IsIn(SUPPORTED_CURRENCIES, {
     message: 'La moneda de origen debe ser USD o PEN',
   })
   @IsDefined({ message: 'La moneda de origen es obligatoria' })
   monedaOrigen!: string;
 
+  @ApiProperty({
+    enum: SUPPORTED_CURRENCIES,
+    example: 'PEN',
+    description: 'Moneda que recibe el cliente; distinta de la de origen',
+  })
   @IsIn(SUPPORTED_CURRENCIES, {
     message: 'La moneda de destino debe ser USD o PEN',
   })
   @IsDefined({ message: 'La moneda de destino es obligatoria' })
   monedaDestino!: string;
 
+  @ApiProperty({
+    example: 100,
+    exclusiveMinimum: true,
+    minimum: 0,
+    maximum: AMOUNT_MAX,
+    description:
+      'Monto a cambiar: mayor a 0, con máximo 2 decimales y 7 dígitos enteros',
+  })
   @Max(AMOUNT_MAX, { message: AMOUNT_MESSAGES.tooLarge })
   @MaxDecimalPlaces(AMOUNT_MAX_DECIMALS, {
     message: AMOUNT_MESSAGES.tooManyDecimals,
