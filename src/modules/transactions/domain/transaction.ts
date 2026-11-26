@@ -45,6 +45,11 @@ export class Transaction {
     });
   }
 
+  /** Rebuilds a transaction that already exists in persistence. */
+  static restore(props: TransactionProps): Transaction {
+    return new Transaction(props);
+  }
+
   get id(): string {
     return this.props.id;
   }

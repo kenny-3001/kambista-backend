@@ -4,6 +4,7 @@ import { GetCurrentExchangeRateUseCase } from '../exchange-rate/application/use-
 import { ExchangeRateModule } from '../exchange-rate/exchange-rate.module';
 import { CurrentRateQuote } from './application/ports/current-rate-quote';
 import { CreateTransactionUseCase } from './application/use-cases/create-transaction.use-case';
+import { GetTransactionHistoryUseCase } from './application/use-cases/get-transaction-history.use-case';
 import { TransactionRepository } from './domain/transaction.repository';
 import { ExchangeRateModuleRateQuote } from './infrastructure/exchange-rate/exchange-rate-module.rate-quote';
 import { MongoTransactionRepository } from './infrastructure/persistence/mongo-transaction.repository';
@@ -36,6 +37,12 @@ import { TransactionsController } from './presentation/transactions.controller';
         currentRate: CurrentRateQuote,
       ) => new CreateTransactionUseCase(transactions, currentRate),
       inject: [TransactionRepository, CurrentRateQuote],
+    },
+    {
+      provide: GetTransactionHistoryUseCase,
+      useFactory: (transactions: TransactionRepository) =>
+        new GetTransactionHistoryUseCase(transactions),
+      inject: [TransactionRepository],
     },
   ],
 })
