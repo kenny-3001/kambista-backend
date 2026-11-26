@@ -3,12 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
-import { TOTAL_COUNT_HEADER } from './modules/transactions/presentation/transactions.controller';
+import { API_PREFIX, configureApp } from './configure-app';
 import { describeStartupError } from './shared/infrastructure/startup/describe-startup-error';
-import {
-  setupSwagger,
-  SWAGGER_PATH,
-} from './shared/presentation/swagger/setup-swagger';
+import { SWAGGER_PATH } from './shared/presentation/swagger/setup-swagger';
 
 const logger = new Logger('Bootstrap');
 
@@ -18,23 +15,11 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     abortOnError: false,
   });
-  const config = app.get(ConfigService);
+  configureApp(app);
 
-  // Do not advertise the server technology.
-  app.disable('x-powered-by');
-  app.setGlobalPrefix('v1');
-  app.enableCors({
-    origin: config.get<string>('CORS_ORIGIN'),
-    // Lets the frontend read the history total for pagination and how long
-    // to wait after too many failed logins.
-    exposedHeaders: [TOTAL_COUNT_HEADER, 'Retry-After'],
-  });
-  app.enableShutdownHooks();
-  setupSwagger(app);
-
-  const port = config.get<number>('PORT', 3000);
+  const port = app.get(ConfigService).get<number>('PORT', 3000);
   await app.listen(port);
-  logger.log(`API running on http://localhost:${port}/v1`);
+  logger.log(`API running on http://localhost:${port}/${API_PREFIX}`);
   logger.log(`API docs on http://localhost:${port}/${SWAGGER_PATH}`);
 }
 
