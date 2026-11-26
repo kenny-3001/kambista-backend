@@ -1,4 +1,6 @@
-import { envValidationSchema } from './env.validation';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { EXAMPLE_JWT_SECRET, envValidationSchema } from './env.validation';
 
 describe('envValidationSchema', () => {
   const validEnv = {
@@ -45,6 +47,15 @@ describe('envValidationSchema', () => {
       { EXCHANGE_RATE_REFRESH_INTERVAL_MS: 'often' },
     ],
     [
+      // Node would turn it into a 1 ms interval and flood the provider.
+      'a refresh interval longer than a timer allows',
+      { EXCHANGE_RATE_REFRESH_INTERVAL_MS: 3_000_000_000 },
+    ],
+    [
+      'a provider timeout longer than a timer allows',
+      { EXCHANGE_RATE_TIMEOUT_MS: 3_000_000_000 },
+    ],
+    [
       'a provider URL that is not http(s)',
       { EXCHANGE_RATE_API_URL: 'ftp://x' },
     ],
@@ -70,6 +81,44 @@ describe('envValidationSchema', () => {
     expect(
       envValidationSchema.validate({ ...validEnv, JWT_SECRET: 'short' }).error,
     ).toBeDefined();
+  });
+
+  it('accepts the example JWT secret outside production, so the README setup works', () => {
+    for (const NODE_ENV of ['development', 'test']) {
+      expect(
+        envValidationSchema.validate({
+          ...validEnv,
+          NODE_ENV,
+          JWT_SECRET: EXAMPLE_JWT_SECRET,
+        }).error,
+      ).toBeUndefined();
+    }
+  });
+
+  it('knows the exact JWT secret published in .env.example', () => {
+    const example = readFileSync(
+      join(__dirname, '../../../../.env.example'),
+      'utf8',
+    );
+
+    // Works with both LF and CRLF checkouts.
+    expect(/^JWT_SECRET=(.*?)\r?$/m.exec(example)?.[1]).toBe(
+      EXAMPLE_JWT_SECRET,
+    );
+  });
+
+  it('rejects the example JWT secret in production', () => {
+    const { error } = envValidationSchema.validate({
+      ...validEnv,
+      NODE_ENV: 'production',
+      JWT_SECRET: EXAMPLE_JWT_SECRET,
+    });
+
+    expect(error?.message).toContain('example value');
+    expect(
+      envValidationSchema.validate({ ...validEnv, NODE_ENV: 'production' })
+        .error,
+    ).toBeUndefined();
   });
 
   it.each(['15m', '900s', '1h', '7d'])(

@@ -6,6 +6,7 @@ import {
   EnsureAdminUserUseCase,
 } from '../modules/auth/application/use-cases/ensure-admin-user.use-case';
 import { DomainError } from '../shared/domain/domain-error';
+import { describeStartupError } from '../shared/infrastructure/startup/describe-startup-error';
 import { SeedAdminModule } from './seed-admin.module';
 
 const OUTCOME_MESSAGES: Record<EnsureAdminUserOutcome, string> = {
@@ -16,14 +17,6 @@ const OUTCOME_MESSAGES: Record<EnsureAdminUserOutcome, string> = {
 };
 
 const logger = new Logger('SeedAdmin');
-
-function describeBootstrapError(error: unknown): string {
-  const message = error instanceof Error ? error.message : String(error);
-  if (error instanceof Error && error.name.startsWith('MongooseServer')) {
-    return `No se pudo conectar a MongoDB (${message}). ¿Está levantado? Ejecuta: docker compose up -d`;
-  }
-  return `No se pudo iniciar el script: ${message}`;
-}
 
 /**
  * Creates the admin user, or promotes an existing one, from ADMIN_NAME,
@@ -39,7 +32,7 @@ async function seedAdmin(): Promise<void> {
       abortOnError: false,
     });
   } catch (error) {
-    logger.error(describeBootstrapError(error));
+    logger.error(describeStartupError(error));
     process.exitCode = 1;
     return;
   }
