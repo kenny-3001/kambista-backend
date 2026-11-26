@@ -31,5 +31,7 @@ export class TransactionDocument {
 export const TransactionSchema =
   SchemaFactory.createForClass(TransactionDocument);
 
-// The history is always read per user and date range.
-TransactionSchema.index({ userId: 1, createdAt: -1 });
+// The history is read per user and date range, newest first with _id as the
+// tie-breaker. The index follows that exact order so MongoDB never has to
+// sort in memory.
+TransactionSchema.index({ userId: 1, createdAt: -1, _id: -1 });

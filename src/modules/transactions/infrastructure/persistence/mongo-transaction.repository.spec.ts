@@ -63,12 +63,13 @@ describe('MongoTransactionRepository (integration)', () => {
     });
   });
 
-  it('indexes transactions by user and date for the history', async () => {
+  it('indexes transactions in the exact order the history reads them', async () => {
     const indexes = await transactionModel.collection.indexes();
 
     expect(indexes.map((index) => index.key)).toContainEqual({
       userId: 1,
       createdAt: -1,
+      _id: -1,
     });
   });
 
@@ -149,6 +150,23 @@ describe('MongoTransactionRepository (integration)', () => {
       expect(pages.every((p) => p.total === 6)).toBe(true);
       expect(new Set(ids).size).toBe(6);
       expect(pages[0].items[0].amount).toBe(6);
+    });
+
+    it('reads the history straight from the index, without an in-memory sort', async () => {
+      await save('user-1', '2024-01-18T15:00:00Z');
+
+      const plan = JSON.stringify(
+        await transactionModel
+          .find({
+            userId: 'user-1',
+            createdAt: { $gte: january18.from, $lt: january18.until },
+          })
+          .sort({ createdAt: -1, _id: -1 })
+          .explain(),
+      );
+
+      expect(plan).toContain('IXSCAN');
+      expect(plan).not.toContain('"stage":"SORT"');
     });
 
     it('returns an empty result for a period without transactions', async () => {
