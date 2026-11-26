@@ -25,8 +25,9 @@ async function bootstrap() {
   app.setGlobalPrefix('v1');
   app.enableCors({
     origin: config.get<string>('CORS_ORIGIN'),
-    // Lets the frontend read the history total for pagination.
-    exposedHeaders: [TOTAL_COUNT_HEADER],
+    // Lets the frontend read the history total for pagination and how long
+    // to wait after too many failed logins.
+    exposedHeaders: [TOTAL_COUNT_HEADER, 'Retry-After'],
   });
   app.enableShutdownHooks();
   setupSwagger(app);

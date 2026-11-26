@@ -1,4 +1,11 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Ip,
+  Post,
+} from '@nestjs/common';
 import {
   ApiCreatedResponse,
   ApiOkResponse,
@@ -66,7 +73,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Iniciar sesión',
     description:
-      'Devuelve el `access_token` (JWT) que se envía como `Authorization: Bearer <token>` en las demás rutas.',
+      'Devuelve el `access_token` (JWT) que se envía como `Authorization: Bearer <token>` en las demás rutas. Protección contra fuerza bruta: por defecto, tras 5 intentos fallidos con el mismo email desde la misma IP en 15 minutos, el login responde 429 hasta que termina ese periodo; la cabecera `Retry-After` indica los segundos de espera (configurable con `LOGIN_MAX_FAILED_ATTEMPTS` y `LOGIN_ATTEMPTS_WINDOW_MINUTES`).',
   })
   @ApiOkResponse({ type: LoginResponse })
   @ApiErrors(
@@ -81,11 +88,21 @@ export class AuthController {
       error: 'INVALID_CREDENTIALS',
       message: 'Email o contraseña incorrectos',
     },
+    {
+      statusCode: 429,
+      error: 'TOO_MANY_LOGIN_ATTEMPTS',
+      message:
+        'Demasiados intentos fallidos. Intenta nuevamente en 15 minutos.',
+    },
   )
-  async login(@Body() dto: LoginDto): Promise<LoginResponse> {
+  async login(
+    @Body() dto: LoginDto,
+    @Ip() clientIp: string,
+  ): Promise<LoginResponse> {
     const { accessToken, user } = await this.loginUser.execute({
       email: dto.email,
       password: dto.password,
+      clientIp,
     });
     return { access_token: accessToken, usuario: toUserResponse(user) };
   }

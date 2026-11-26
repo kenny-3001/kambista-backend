@@ -18,6 +18,7 @@ const STATUS_BY_TYPE: Record<DomainErrorType, HttpStatus> = {
   [DomainErrorType.NOT_FOUND]: HttpStatus.NOT_FOUND,
   [DomainErrorType.CONFLICT]: HttpStatus.CONFLICT,
   [DomainErrorType.UNAVAILABLE]: HttpStatus.SERVICE_UNAVAILABLE,
+  [DomainErrorType.TOO_MANY_REQUESTS]: HttpStatus.TOO_MANY_REQUESTS,
 };
 
 /** Framework-level errors (not raised by our own code), by status. */
@@ -77,8 +78,15 @@ export class ApiExceptionFilter implements ExceptionFilter {
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const http = host.switchToHttp();
+    const response = http.getResponse<Response>();
     const body = this.toBody(exception, http.getRequest<Request>());
-    http.getResponse<Response>().status(body.statusCode).json(body);
+    if (
+      exception instanceof DomainError &&
+      exception.retryAfterSeconds !== undefined
+    ) {
+      response.setHeader('Retry-After', exception.retryAfterSeconds);
+    }
+    response.status(body.statusCode).json(body);
   }
 
   private toBody(exception: unknown, request: Request): ApiErrorBody {

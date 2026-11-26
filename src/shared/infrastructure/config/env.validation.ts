@@ -30,6 +30,14 @@ export const envValidationSchema = Joi.object({
   JWT_EXPIRES_IN: Joi.string()
     .pattern(/^[1-9]\d*[smhd]$/)
     .default('1h'),
+  // Brute-force protection: failed logins allowed per email and IP within
+  // one window; the next attempt is rejected until the window ends.
+  LOGIN_MAX_FAILED_ATTEMPTS: Joi.number().integer().min(1).max(100).default(5),
+  LOGIN_ATTEMPTS_WINDOW_MINUTES: Joi.number()
+    .integer()
+    .min(1)
+    .max(24 * 60)
+    .default(15),
   EXCHANGE_RATE_API_URL: Joi.string()
     .uri({ scheme: ['http', 'https'] })
     .default('https://api.apis.net.pe/v1/tipo-cambio-sunat'),

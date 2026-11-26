@@ -173,5 +173,8 @@ describe('API documentation (Swagger)', () => {
     expect(errorCodes(operation('/v1/auth/login', 'post'), '401')).toEqual([
       'INVALID_CREDENTIALS',
     ]);
+    expect(errorCodes(operation('/v1/auth/login', 'post'), '429')).toEqual([
+      'TOO_MANY_LOGIN_ATTEMPTS',
+    ]);
   });
 });

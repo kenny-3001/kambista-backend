@@ -3,12 +3,18 @@ import { ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule, JwtSignOptions } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
+import { LoginAttemptCounter } from './application/ports/login-attempt-counter';
 import { PasswordHasher } from './application/ports/password-hasher';
 import { TokenService } from './application/ports/token-service';
 import { EnsureAdminUserUseCase } from './application/use-cases/ensure-admin-user.use-case';
 import { LoginUserUseCase } from './application/use-cases/login-user.use-case';
 import { RegisterUserUseCase } from './application/use-cases/register-user.use-case';
 import { UserRepository } from './domain/user.repository';
+import {
+  LoginAttemptDocument,
+  LoginAttemptSchema,
+} from './infrastructure/persistence/login-attempt.schema';
+import { MongoLoginAttemptCounter } from './infrastructure/persistence/mongo-login-attempt-counter';
 import { MongoUserRepository } from './infrastructure/persistence/mongo-user.repository';
 import {
   UserDocument,
@@ -24,6 +30,7 @@ import { RolesGuard } from './presentation/guards/roles.guard';
   imports: [
     MongooseModule.forFeature([
       { name: UserDocument.name, schema: UserSchema },
+      { name: LoginAttemptDocument.name, schema: LoginAttemptSchema },
     ]),
     JwtModule.registerAsync({
       inject: [ConfigService],
@@ -42,6 +49,7 @@ import { RolesGuard } from './presentation/guards/roles.guard';
     { provide: UserRepository, useClass: MongoUserRepository },
     { provide: PasswordHasher, useClass: BcryptPasswordHasher },
     { provide: TokenService, useClass: JwtTokenService },
+    { provide: LoginAttemptCounter, useClass: MongoLoginAttemptCounter },
     // Global guards run in registration order: authenticate, then authorize.
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
@@ -58,8 +66,23 @@ import { RolesGuard } from './presentation/guards/roles.guard';
         users: UserRepository,
         hasher: PasswordHasher,
         tokens: TokenService,
-      ) => new LoginUserUseCase(users, hasher, tokens),
-      inject: [UserRepository, PasswordHasher, TokenService],
+        attempts: LoginAttemptCounter,
+        config: ConfigService,
+      ) =>
+        new LoginUserUseCase(users, hasher, tokens, attempts, {
+          maxFailedAttempts: config.getOrThrow<number>(
+            'LOGIN_MAX_FAILED_ATTEMPTS',
+          ),
+          windowMs:
+            config.getOrThrow<number>('LOGIN_ATTEMPTS_WINDOW_MINUTES') * 60_000,
+        }),
+      inject: [
+        UserRepository,
+        PasswordHasher,
+        TokenService,
+        LoginAttemptCounter,
+        ConfigService,
+      ],
     },
     {
       provide: EnsureAdminUserUseCase,

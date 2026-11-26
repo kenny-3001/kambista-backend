@@ -5,6 +5,7 @@ export enum DomainErrorType {
   NOT_FOUND = 'not_found',
   CONFLICT = 'conflict',
   UNAVAILABLE = 'unavailable',
+  TOO_MANY_REQUESTS = 'too_many_requests',
 }
 
 /**
@@ -15,6 +16,8 @@ export enum DomainErrorType {
 export abstract class DomainError extends Error {
   abstract readonly code: string;
   abstract readonly type: DomainErrorType;
+  /** When set, the client may retry after this many seconds. */
+  readonly retryAfterSeconds?: number;
 
   protected constructor(message: string) {
     super(message);

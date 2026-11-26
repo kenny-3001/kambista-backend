@@ -35,11 +35,26 @@ class SampleDto {
   edad!: number;
 }
 
+class SampleThrottledError extends DomainError {
+  readonly code = 'SAMPLE_THROTTLED';
+  readonly type = DomainErrorType.TOO_MANY_REQUESTS;
+  readonly retryAfterSeconds = 90;
+
+  constructor() {
+    super('Espera un momento');
+  }
+}
+
 @Controller('probe')
 class ProbeController {
   @Get('conflict')
   conflict() {
     throw new SampleConflictError();
+  }
+
+  @Get('throttled')
+  throttled() {
+    throw new SampleThrottledError();
   }
 
   @Get('crash')
@@ -92,6 +107,23 @@ describe('ApiExceptionFilter (integration)', () => {
       error: 'SAMPLE_CONFLICT',
       message: 'Conflicto de ejemplo',
     });
+  });
+
+  it('answers throttling errors with 429 and a Retry-After header', async () => {
+    const res = await server().get('/probe/throttled').expect(429);
+
+    expect(res.headers['retry-after']).toBe('90');
+    expect(res.body).toEqual({
+      statusCode: 429,
+      error: 'SAMPLE_THROTTLED',
+      message: 'Espera un momento',
+    });
+  });
+
+  it('sends no Retry-After header for other errors', async () => {
+    const res = await server().get('/probe/conflict').expect(409);
+
+    expect(res.headers['retry-after']).toBeUndefined();
   });
 
   it('answers validation errors with one message per invalid field', async () => {
