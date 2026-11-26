@@ -13,6 +13,7 @@ import {
 import { MongoExchangeRateRepository } from './infrastructure/persistence/mongo-exchange-rate.repository';
 import { ApisNetPeExchangeRateProvider } from './infrastructure/providers/apis-net-pe-exchange-rate.provider';
 import { ExchangeRateRefreshScheduler } from './infrastructure/scheduling/exchange-rate-refresh.scheduler';
+import { ExchangeRateController } from './presentation/exchange-rate.controller';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { ExchangeRateRefreshScheduler } from './infrastructure/scheduling/exchan
       { name: ExchangeRateDocument.name, schema: ExchangeRateSchema },
     ]),
   ],
+  controllers: [ExchangeRateController],
   providers: [
     MongoExchangeRateRepository,
     {

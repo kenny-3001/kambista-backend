@@ -4,6 +4,8 @@ import { Test } from '@nestjs/testing';
 import { LoginUserUseCase } from './modules/auth/application/use-cases/login-user.use-case';
 import { RegisterUserUseCase } from './modules/auth/application/use-cases/register-user.use-case';
 import { AuthController } from './modules/auth/presentation/auth.controller';
+import { GetCurrentExchangeRateUseCase } from './modules/exchange-rate/application/use-cases/get-current-exchange-rate.use-case';
+import { ExchangeRateController } from './modules/exchange-rate/presentation/exchange-rate.controller';
 import { CreateTransactionUseCase } from './modules/transactions/application/use-cases/create-transaction.use-case';
 import { GetTransactionHistoryUseCase } from './modules/transactions/application/use-cases/get-transaction-history.use-case';
 import { TransactionsController } from './modules/transactions/presentation/transactions.controller';
@@ -31,11 +33,16 @@ describe('API documentation (Swagger)', () => {
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      controllers: [AuthController, TransactionsController],
+      controllers: [
+        AuthController,
+        ExchangeRateController,
+        TransactionsController,
+      ],
       providers: [
         // Only the routes and their metadata matter here.
         { provide: RegisterUserUseCase, useValue: {} },
         { provide: LoginUserUseCase, useValue: {} },
+        { provide: GetCurrentExchangeRateUseCase, useValue: {} },
         { provide: CreateTransactionUseCase, useValue: {} },
         { provide: GetTransactionHistoryUseCase, useValue: {} },
       ],
@@ -59,10 +66,11 @@ describe('API documentation (Swagger)', () => {
       op.responses[status]?.content?.['application/json']?.examples ?? {},
     );
 
-  it('documents every endpoint of the statement under /v1', () => {
+  it('documents every endpoint under /v1', () => {
     expect(Object.keys(document.paths).sort()).toEqual([
       '/v1/auth/login',
       '/v1/auth/register',
+      '/v1/exchange-rate',
       '/v1/transactions',
       '/v1/transactions/history',
     ]);
@@ -77,6 +85,9 @@ describe('API documentation (Swagger)', () => {
       { bearer: [] },
     ]);
     expect(operation('/v1/transactions/history', 'get').security).toEqual([
+      { bearer: [] },
+    ]);
+    expect(operation('/v1/exchange-rate', 'get').security).toEqual([
       { bearer: [] },
     ]);
     expect(operation('/v1/auth/login', 'post').security).toBeUndefined();
@@ -106,6 +117,14 @@ describe('API documentation (Swagger)', () => {
       'montoCambiado',
       'tipoCambio',
       'fecha',
+    ]);
+    expect(propertiesOf('ExchangeRateResponse')).toEqual([
+      'compra',
+      'venta',
+      'origen',
+      'moneda',
+      'fecha',
+      'actualizadoEn',
     ]);
     expect(propertiesOf('CreateTransactionDto')).toEqual([
       'monedaOrigen',
@@ -145,6 +164,9 @@ describe('API documentation (Swagger)', () => {
       'INVALID_ACCESS_TOKEN',
     ]);
     expect(errorCodes(create, '503')).toEqual(['EXCHANGE_RATE_NOT_AVAILABLE']);
+    expect(errorCodes(operation('/v1/exchange-rate', 'get'), '503')).toEqual([
+      'EXCHANGE_RATE_NOT_AVAILABLE',
+    ]);
     expect(errorCodes(operation('/v1/auth/register', 'post'), '409')).toEqual([
       'EMAIL_ALREADY_REGISTERED',
     ]);
