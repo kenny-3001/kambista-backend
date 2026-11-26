@@ -67,11 +67,12 @@ describe('MongoUserRepository (integration)', () => {
     await repository.create(user);
 
     user.promoteToAdmin();
+    user.changePassword('new-hash');
     await repository.update(user);
 
     const found = await repository.findByEmail(user.email);
     expect(found!.role).toBe(Role.ADMIN);
-    expect(found!.passwordHash).toBe('hash');
+    expect(found!.passwordHash).toBe('new-hash');
     expect(await userModel.countDocuments()).toBe(1);
   });
 

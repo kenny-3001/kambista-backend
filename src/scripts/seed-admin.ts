@@ -10,7 +10,8 @@ import { SeedAdminModule } from './seed-admin.module';
 
 const OUTCOME_MESSAGES: Record<EnsureAdminUserOutcome, string> = {
   created: 'Usuario admin creado',
-  promoted: 'Usuario existente promovido a admin (su contraseña no cambió)',
+  promoted:
+    'Usuario existente promovido a admin; su contraseña ahora es ADMIN_PASSWORD',
   unchanged: 'El usuario ya era admin; no se hicieron cambios',
 };
 

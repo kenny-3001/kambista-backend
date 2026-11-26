@@ -31,7 +31,7 @@ describe('EnsureAdminUserUseCase', () => {
     expect(users.users.get(user.id)).toBe(user);
   });
 
-  it('promotes an existing user without touching the password', async () => {
+  it('promotes an existing user and replaces their password with the configured one', async () => {
     const existing = User.register({
       name: 'Juan',
       email: Email.create('admin@example.com'),
@@ -47,15 +47,35 @@ describe('EnsureAdminUserUseCase', () => {
     expect(outcome).toBe('promoted');
     expect(user.id).toBe(existing.id);
     expect(user.role).toBe(Role.ADMIN);
-    expect(user.passwordHash).toBe('hashed:original-password');
+    // Whoever registered the admin email first must not keep access.
+    expect(user.passwordHash).toBe('hashed:Admin12345');
     expect(users.users.size).toBe(1);
   });
 
-  it('is idempotent when the user is already an admin', async () => {
+  it('rejects a weak password before promoting an existing user', async () => {
+    const existing = User.register({
+      name: 'Juan',
+      email: Email.create('admin@example.com'),
+      passwordHash: 'hashed:original-password',
+    });
+    await users.create(existing);
+
+    await expect(
+      ensureAdmin.execute({ ...command, password: '123' }),
+    ).rejects.toThrow(InvalidPasswordError);
+    expect(existing.role).toBe(Role.USER);
+    expect(existing.passwordHash).toBe('hashed:original-password');
+  });
+
+  it('is idempotent when the user is already an admin, keeping their password', async () => {
     await ensureAdmin.execute(command);
-    const { outcome } = await ensureAdmin.execute(command);
+    const { user, outcome } = await ensureAdmin.execute({
+      ...command,
+      password: 'another-password',
+    });
 
     expect(outcome).toBe('unchanged');
+    expect(user.passwordHash).toBe('hashed:Admin12345');
     expect(users.users.size).toBe(1);
   });
 

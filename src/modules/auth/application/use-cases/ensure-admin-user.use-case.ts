@@ -19,8 +19,13 @@ export interface EnsureAdminUserResult {
 
 /**
  * Idempotently guarantees that an admin exists for the given email:
- * creates it when missing, promotes an existing user otherwise. An existing
- * user's password is never changed.
+ * creates it when missing, promotes an existing user otherwise, and leaves
+ * an existing admin untouched.
+ *
+ * Registration is public, so anyone could sign up with the admin email before
+ * the seed runs. Promoting that account as it is would hand admin rights to
+ * whoever chose its password; that is why a promoted user always gets the
+ * configured password.
  */
 export class EnsureAdminUserUseCase {
   constructor(
@@ -38,6 +43,8 @@ export class EnsureAdminUserUseCase {
       if (existing.isAdmin()) {
         return { user: existing, outcome: 'unchanged' };
       }
+      assertValidPassword(command.password);
+      existing.changePassword(await this.passwordHasher.hash(command.password));
       existing.promoteToAdmin();
       await this.users.update(existing);
       return { user: existing, outcome: 'promoted' };

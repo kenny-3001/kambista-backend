@@ -73,4 +73,8 @@ export class User {
   promoteToAdmin(): void {
     this.props.role = Role.ADMIN;
   }
+
+  changePassword(passwordHash: string): void {
+    this.props.passwordHash = passwordHash;
+  }
 }

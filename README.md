@@ -29,4 +29,8 @@ El registro público siempre asigna el rol `user`. Para crear un administrador (
 npm run seed:admin
 ```
 
-El comando es idempotente: si el usuario ya existe, solo se le asigna el rol `admin` sin cambiar su contraseña.
+El comando es idempotente:
+
+- Si el usuario no existe, se crea como `admin`.
+- Si existe con rol `user`, se promueve a `admin` y su contraseña pasa a ser `ADMIN_PASSWORD`. Así, si alguien registró ese email antes, pierde el acceso.
+- Si ya es `admin`, no se cambia nada.
