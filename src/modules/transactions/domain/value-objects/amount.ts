@@ -12,6 +12,14 @@ export const AMOUNT_MESSAGES = {
   tooLarge: 'El monto no puede superar 9,999,999.99',
 } as const;
 
+/**
+ * Counts decimal places exactly, including numbers that JavaScript prints in
+ * exponent notation (1e-7 has 7 decimal places).
+ */
+export function countDecimalPlaces(value: number): number {
+  return new Decimal(value).decimalPlaces();
+}
+
 /** Amount the customer sends: positive, with cents precision and a cap. */
 export class Amount {
   private constructor(readonly value: number) {}
@@ -23,7 +31,7 @@ export class Amount {
     if (value <= 0) {
       throw new InvalidAmountError(AMOUNT_MESSAGES.notPositive);
     }
-    if (new Decimal(value).decimalPlaces() > AMOUNT_MAX_DECIMALS) {
+    if (countDecimalPlaces(value) > AMOUNT_MAX_DECIMALS) {
       throw new InvalidAmountError(AMOUNT_MESSAGES.tooManyDecimals);
     }
     if (value > AMOUNT_MAX) {

@@ -14,6 +14,8 @@ describe('Amount', () => {
     ['a negative amount', -10, AMOUNT_MESSAGES.notPositive],
     ['more than 2 decimals', 10.123, AMOUNT_MESSAGES.tooManyDecimals],
     ['less than one cent', 0.001, AMOUNT_MESSAGES.tooManyDecimals],
+    ['exponent notation (1e-7)', 1e-7, AMOUNT_MESSAGES.tooManyDecimals],
+    ['the smallest positive number', 5e-324, AMOUNT_MESSAGES.tooManyDecimals],
     ['more than 7 integer digits', 10_000_000, AMOUNT_MESSAGES.tooLarge],
     ['NaN', NaN, AMOUNT_MESSAGES.notANumber],
     ['Infinity', Infinity, AMOUNT_MESSAGES.notANumber],

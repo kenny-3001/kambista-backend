@@ -5,6 +5,7 @@ import {
   AMOUNT_MAX_DECIMALS,
   AMOUNT_MESSAGES,
 } from '../../domain/value-objects/amount';
+import { MaxDecimalPlaces } from './max-decimal-places.validator';
 
 // class-validator runs decorators bottom-up and the pipe stops at the first
 // error, so the most basic check (presence) sits closest to the property.
@@ -23,10 +24,9 @@ export class CreateTransactionDto {
   monedaDestino!: string;
 
   @Max(AMOUNT_MAX, { message: AMOUNT_MESSAGES.tooLarge })
-  @IsNumber(
-    { maxDecimalPlaces: AMOUNT_MAX_DECIMALS },
-    { message: AMOUNT_MESSAGES.tooManyDecimals },
-  )
+  @MaxDecimalPlaces(AMOUNT_MAX_DECIMALS, {
+    message: AMOUNT_MESSAGES.tooManyDecimals,
+  })
   @IsPositive({ message: AMOUNT_MESSAGES.notPositive })
   @IsNumber(
     { allowNaN: false, allowInfinity: false },

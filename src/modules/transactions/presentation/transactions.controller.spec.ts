@@ -149,6 +149,17 @@ describe('TransactionsController (integration)', () => {
         { monto: 10.123 },
         AMOUNT_MESSAGES.tooManyDecimals,
       ],
+      // Regression: these used to crash class-validator and answer 500.
+      [
+        'a tiny amount in exponent notation',
+        { monto: 1e-7 },
+        AMOUNT_MESSAGES.tooManyDecimals,
+      ],
+      [
+        'the smallest positive number',
+        { monto: 5e-324 },
+        AMOUNT_MESSAGES.tooManyDecimals,
+      ],
       [
         'more than 7 integer digits',
         { monto: 10_000_000 },
