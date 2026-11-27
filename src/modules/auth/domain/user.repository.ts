@@ -11,4 +11,9 @@ export abstract class UserRepository {
   abstract findByEmail(email: Email): Promise<User | null>;
   abstract create(user: User): Promise<void>;
   abstract update(user: User): Promise<void>;
+  /**
+   * Users whose name or email contains `text` (case-insensitive; every user
+   * when omitted), ordered by name and then email, at most `limit`.
+   */
+  abstract search(params: { text?: string; limit: number }): Promise<User[]>;
 }

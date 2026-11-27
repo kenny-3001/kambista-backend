@@ -268,6 +268,100 @@ describe('Kambista API (e2e)', () => {
     });
   });
 
+  describe('GET /v1/users (admin user picker)', () => {
+    let adminToken: string;
+    let userToken: string;
+
+    const users = (token: string, query: Record<string, string> = {}) =>
+      e2e
+        .api()
+        .get('/v1/users')
+        .query(query)
+        .set('Authorization', `Bearer ${token}`);
+
+    beforeAll(async () => {
+      await newUser('zoe.users@example.com', 'Zoe Users');
+      const marta = await newUser('marta.users@example.com', 'Marta Users');
+      userToken = marta.access_token;
+      await newUser('root.users@example.com', 'Root Users');
+      await e2e.db
+        .collection('users')
+        .updateOne(
+          { email: 'root.users@example.com' },
+          { $set: { role: 'admin' } },
+        );
+      adminToken = (await login('root.users@example.com')).session.access_token;
+    });
+
+    it('lets an admin list users, ordered by name, without any secret', async () => {
+      const res = await users(adminToken, { search: 'users' }).expect(200);
+
+      const body = bodyOf<UserBody[]>(res);
+      expect(body.map((u) => u.nombre)).toEqual([
+        'Marta Users',
+        'Root Users',
+        'Zoe Users',
+      ]);
+      expect(Object.keys(body[0]).sort()).toEqual([
+        'email',
+        'id',
+        'nombre',
+        'rol',
+      ]);
+      expect(JSON.stringify(res.body)).not.toMatch(/password|hash|\$2[aby]\$/i);
+    });
+
+    it('filters by part of the name or the email, ignoring case', async () => {
+      const byName = await users(adminToken, { search: 'ZOE' }).expect(200);
+      const byEmail = await users(adminToken, {
+        search: 'marta.users@',
+      }).expect(200);
+
+      expect(bodyOf<UserBody[]>(byName).map((u) => u.email)).toEqual([
+        'zoe.users@example.com',
+      ]);
+      expect(bodyOf<UserBody[]>(byEmail).map((u) => u.nombre)).toEqual([
+        'Marta Users',
+      ]);
+    });
+
+    it('takes the search literally, not as a regular expression', async () => {
+      const res = await users(adminToken, { search: '.*' }).expect(200);
+
+      expect(res.body).toEqual([]);
+    });
+
+    it('respects the limit', async () => {
+      const res = await users(adminToken, {
+        search: 'users',
+        limit: '2',
+      }).expect(200);
+
+      expect(res.body).toHaveLength(2);
+    });
+
+    it.each(['0', '51', 'abc', '1.5'])(
+      'rejects the limit %s',
+      async (limit) => {
+        const res = await users(adminToken, { limit }).expect(400);
+
+        expect(bodyOf<ErrorBody>(res).error).toBe('VALIDATION_ERROR');
+      },
+    );
+
+    it('forbids the user role', async () => {
+      const res = await users(userToken).expect(403);
+
+      expect(bodyOf<ErrorBody>(res).error).toBe('INSUFFICIENT_PERMISSIONS');
+    });
+
+    it('requires a token', async () => {
+      const res = await e2e.api().get('/v1/users').expect(401);
+
+      expect(bodyOf<ErrorBody>(res).error).toBe('MISSING_ACCESS_TOKEN');
+    });
+  });
+
   describe('validations and errors, all in one format', () => {
     let token: string;
 

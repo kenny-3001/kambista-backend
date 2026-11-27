@@ -9,6 +9,7 @@ import { RefreshTokenGenerator } from './application/ports/refresh-token-generat
 import { TokenService } from './application/ports/token-service';
 import { SessionTokenIssuer } from './application/services/session-token-issuer';
 import { EnsureAdminUserUseCase } from './application/use-cases/ensure-admin-user.use-case';
+import { ListUsersUseCase } from './application/use-cases/list-users.use-case';
 import { LoginUserUseCase } from './application/use-cases/login-user.use-case';
 import { LogoutUseCase } from './application/use-cases/logout.use-case';
 import { RefreshSessionUseCase } from './application/use-cases/refresh-session.use-case';
@@ -36,6 +37,7 @@ import { JwtTokenService } from './infrastructure/security/jwt-token.service';
 import { AuthController } from './presentation/auth.controller';
 import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
 import { RolesGuard } from './presentation/guards/roles.guard';
+import { UsersController } from './presentation/users.controller';
 
 @Module({
   imports: [
@@ -56,7 +58,7 @@ import { RolesGuard } from './presentation/guards/roles.guard';
       }),
     }),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, UsersController],
   providers: [
     { provide: UserRepository, useClass: MongoUserRepository },
     { provide: PasswordHasher, useClass: BcryptPasswordHasher },
@@ -144,6 +146,11 @@ import { RolesGuard } from './presentation/guards/roles.guard';
         generator: RefreshTokenGenerator,
       ) => new LogoutUseCase(refreshTokens, generator),
       inject: [RefreshTokenRepository, RefreshTokenGenerator],
+    },
+    {
+      provide: ListUsersUseCase,
+      useFactory: (users: UserRepository) => new ListUsersUseCase(users),
+      inject: [UserRepository],
     },
     {
       provide: EnsureAdminUserUseCase,

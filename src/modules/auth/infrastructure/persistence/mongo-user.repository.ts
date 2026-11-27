@@ -57,4 +57,30 @@ export class MongoUserRepository extends UserRepository {
       throw new UserNotFoundError();
     }
   }
+
+  async search(params: { text?: string; limit: number }): Promise<User[]> {
+    const text = params.text?.trim();
+    const filter = text
+      ? {
+          $or: [
+            { name: { $regex: escapeRegex(text), $options: 'i' } },
+            { email: { $regex: escapeRegex(text), $options: 'i' } },
+          ],
+        }
+      : {};
+    const documents = await this.userModel
+      .find(filter)
+      // The collation makes the order ignore case and accents.
+      .collation({ locale: 'es', strength: 2 })
+      .sort({ name: 1, email: 1 })
+      .limit(params.limit)
+      .lean<UserDocument[]>()
+      .exec();
+    return documents.map((document) => UserMapper.toDomain(document));
+  }
+}
+
+/** Makes user input match literally inside a regular expression. */
+function escapeRegex(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

@@ -27,4 +27,20 @@ export class InMemoryUserRepository extends UserRepository {
     this.users.set(user.id, user);
     return Promise.resolve();
   }
+
+  search(params: { text?: string; limit: number }): Promise<User[]> {
+    const text = params.text?.trim().toLowerCase();
+    const matches = [...this.users.values()].filter(
+      (user) =>
+        !text ||
+        user.name.toLowerCase().includes(text) ||
+        user.email.value.includes(text),
+    );
+    matches.sort(
+      (a, b) =>
+        a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }) ||
+        a.email.value.localeCompare(b.email.value),
+    );
+    return Promise.resolve(matches.slice(0, params.limit));
+  }
 }

@@ -53,6 +53,9 @@ Todas las rutas llevan el prefijo `/v1`. Las de negocio requieren `Authorization
 | GET    | `/exchange-rate`        | Sí            | Tipo de cambio vigente (extra para el formulario del frontend)   |
 | POST   | `/transactions`         | Sí            | Registra un cambio (`monedaOrigen`, `monedaDestino`, `monto`)    |
 | GET    | `/transactions/history` | Sí            | Historial por rango de fechas (`startDate`, `endDate`)           |
+| GET    | `/users`                | Sí (`admin`)  | Busca usuarios por nombre o email (`search`, `limit`, máx. 50)   |
+
+`GET /users` es un extra al enunciado: alimenta el selector de usuario con el que el admin consulta el historial de otro, en lugar de pegar su `userId` a mano. Solo responde al rol `admin` (`403` al resto) y nunca incluye la contraseña ni su hash.
 
 El detalle de cada campo, respuesta y error, con ejemplos, está en Swagger (`/docs`).
 
@@ -213,7 +216,7 @@ Los casos de uso se conectan a sus implementaciones en el módulo de Nest con `u
 - **Refresh token opaco de 7 días**, guardado como hash SHA-256. Cada uso entrega uno nuevo (rotación); **reusar uno ya usado cierra toda esa sesión**, porque indica un posible robo. Por eso un cliente debe renovar una sola vez a la vez: dos renovaciones simultáneas con el mismo token se verían como reuso. El frontend las serializa, también entre pestañas.
 - **Cerrar sesión revoca el refresh token, pero el access token ya emitido sigue siendo válido hasta vencer** (15 minutos como máximo): es un JWT sin estado.
 - Todo endpoint nace protegido: el guard JWT es global y solo las rutas marcadas `@Public()` (las de `/auth`) quedan abiertas.
-- La regla de administrador del historial se aplica en el caso de uso: el `userId` que envía un `user` se ignora y ve su propio historial, sin error. También hay un guard de roles global, listo para rutas exclusivas de admin con `@Roles()` (responderían `403 INSUFFICIENT_PERMISSIONS`); hoy ninguna lo necesita.
+- La regla de administrador del historial se aplica en el caso de uso: el `userId` que envía un `user` se ignora y ve su propio historial, sin error. También hay un guard de roles global para rutas exclusivas de admin con `@Roles()` (responden `403 INSUFFICIENT_PERMISSIONS`); lo usa `GET /users`.
 
 ### Límite de intentos de login
 
@@ -221,6 +224,7 @@ Los casos de uso se conectan a sus implementaciones en el módulo de Nest con `u
 - La clave es email + IP: un atacante no puede bloquear a la víctima desde otra dirección ni probar muchas contraseñas desde la suya. El contador es atómico en MongoDB (no se puede esquivar con peticiones simultáneas) y se borra solo al vencer.
 
 ### Logging
+
 
 - Una línea por petición con método, ruta (sin la query), estado, duración, usuario e **ID de petición**. El ID se devuelve en la cabecera `X-Request-Id` y acompaña a los errores 500 en el log, para encontrar un error a partir de lo que reporta un usuario.
 - En producción cada línea es un objeto JSON, listo para un recolector de logs.
