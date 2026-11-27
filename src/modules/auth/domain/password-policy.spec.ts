@@ -2,8 +2,8 @@ import { InvalidPasswordError } from './errors/invalid-password.error';
 import { assertValidPassword, PASSWORD_MESSAGES } from './password-policy';
 
 describe('assertValidPassword', () => {
-  it.each(['12345678', 'contraseña123', 'a'.repeat(72)])(
-    'accepts a password of valid length (%s)',
+  it.each(['MiClave2024', 'contraseña123', 'abcdefg1', 'a'.repeat(71) + '1'])(
+    'accepts a valid password (%s)',
     (password) => {
       expect(() => assertValidPassword(password)).not.toThrow();
     },
@@ -17,17 +17,36 @@ describe('assertValidPassword', () => {
     );
   });
 
+  it.each([
+    ['only digits', '12345678', PASSWORD_MESSAGES.noLetter],
+    ['only symbols and digits', '1234-5678', PASSWORD_MESSAGES.noLetter],
+    ['only letters', 'abcdefgh', PASSWORD_MESSAGES.noDigit],
+    [
+      'letters with accents but no digit',
+      'contraseña',
+      PASSWORD_MESSAGES.noDigit,
+    ],
+  ])('rejects a password with %s', (_label, password, message) => {
+    expect(() => assertValidPassword(password)).toThrow(
+      new InvalidPasswordError(message),
+    );
+  });
+
+  it('counts ñ and accented letters as letters', () => {
+    expect(() => assertValidPassword('ñññññññ1')).not.toThrow();
+  });
+
   it('rejects a password longer than 72 characters', () => {
-    expect(() => assertValidPassword('a'.repeat(73))).toThrow(
+    expect(() => assertValidPassword('a'.repeat(72) + '1')).toThrow(
       new InvalidPasswordError(PASSWORD_MESSAGES.tooLong),
     );
   });
 
   it('counts the limit in bytes, as bcrypt does', () => {
     // 'ñ' takes 2 bytes: 36 of them fill the 72 bytes bcrypt reads.
-    expect(() => assertValidPassword('ñ'.repeat(36))).not.toThrow();
+    expect(() => assertValidPassword('ñ'.repeat(35) + '1a')).not.toThrow();
     // 40 characters but 76 bytes: the last ones would be silently ignored.
-    expect(() => assertValidPassword('ñ'.repeat(36) + 'AAAA')).toThrow(
+    expect(() => assertValidPassword('ñ'.repeat(36) + 'AAA1')).toThrow(
       new InvalidPasswordError(PASSWORD_MESSAGES.tooLong),
     );
   });

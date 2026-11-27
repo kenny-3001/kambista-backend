@@ -456,6 +456,30 @@ describe('Kambista API (e2e)', () => {
       expectError(reversed, 400, 'INVALID_HISTORY_PERIOD');
     });
 
+    it('asks for a password with at least 8 characters, a letter and a number', async () => {
+      const attempt = (password: string) =>
+        e2e.api().post('/v1/auth/register').send({
+          nombre: 'Juan Pérez',
+          email: 'debil@example.com',
+          password,
+        });
+
+      for (const [password, message] of [
+        ['corta1', 'La contraseña debe tener al menos 8 caracteres'],
+        ['12345678', 'La contraseña debe tener al menos una letra'],
+        ['contraseña', 'La contraseña debe tener al menos un número'],
+      ]) {
+        const body = expectError(
+          await attempt(password),
+          400,
+          'VALIDATION_ERROR',
+        );
+        expect(body.details).toEqual([{ field: 'password', message }]);
+      }
+      // The example password of the statement is still accepted.
+      expect((await attempt('contraseña123')).status).toBe(201);
+    });
+
     it('answers a duplicated email, wrong credentials and malformed requests clearly', async () => {
       expectError(
         await register('errores@example.com'),

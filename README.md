@@ -211,7 +211,7 @@ Los casos de uso se conectan a sus implementaciones en el módulo de Nest con `u
 
 ### Autenticación y sesión
 
-- Contraseñas con bcrypt (de 8 a 72 bytes, el límite real de bcrypt). Nunca se devuelven ni se registran.
+- Contraseñas con bcrypt. Al registrarse deben tener al menos 8 caracteres, una letra (vale con tilde o ñ) y un número, y como máximo 72 bytes, el límite real de bcrypt. No se exige mayúscula ni símbolo, para no rechazar la contraseña de ejemplo del enunciado (`contraseña123`). Nunca se devuelven ni se registran.
 - Un login con un email inexistente también calcula un hash antes de responder `401`: el tiempo de respuesta no revela qué emails están registrados.
 - **Access token JWT de 15 minutos** (HS256, con expiración obligatoria). Lleva el id, el email y el rol, y no se consulta la base en cada petición: si a alguien se le quita el rol admin, lo pierde cuando su token vence.
 - **Refresh token opaco de 7 días**, guardado como hash SHA-256. Cada uso entrega uno nuevo (rotación); **reusar uno ya usado cierra toda esa sesión**, porque indica un posible robo. Por eso un cliente debe renovar una sola vez a la vez: dos renovaciones simultáneas con el mismo token se verían como reuso. El frontend las serializa, también entre pestañas.

@@ -4,10 +4,13 @@ import {
   IsEmail,
   IsNotEmpty,
   IsString,
+  Matches,
   MaxLength,
   MinLength,
 } from 'class-validator';
 import {
+  PASSWORD_DIGIT,
+  PASSWORD_LETTER,
   PASSWORD_MESSAGES,
   PASSWORD_MIN_LENGTH,
 } from '../../domain/password-policy';
@@ -36,9 +39,11 @@ export class RegisterDto {
     example: 'MiClave2024',
     minLength: PASSWORD_MIN_LENGTH,
     description:
-      'Entre 8 y 72 caracteres (las letras con tilde y la ñ cuentan como 2)',
+      'Entre 8 y 72 caracteres (las letras con tilde y la ñ cuentan como 2), con al menos una letra y un número',
   })
   @FitsPasswordBytes({ message: PASSWORD_MESSAGES.tooLong })
+  @Matches(PASSWORD_DIGIT, { message: PASSWORD_MESSAGES.noDigit })
+  @Matches(PASSWORD_LETTER, { message: PASSWORD_MESSAGES.noLetter })
   @MinLength(PASSWORD_MIN_LENGTH, { message: PASSWORD_MESSAGES.tooShort })
   @IsString({ message: 'La contraseña debe ser un texto' })
   @IsNotEmpty({ message: 'La contraseña es obligatoria' })
