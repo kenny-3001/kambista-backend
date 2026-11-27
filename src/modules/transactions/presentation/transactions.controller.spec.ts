@@ -270,6 +270,18 @@ describe('TransactionsController (integration)', () => {
       expect(res.headers['x-total-count']).toBe('2');
     });
 
+    it('pages by default: never more than 20 without page or limit', async () => {
+      for (let day = 1; day <= 25; day++) {
+        store('user-1', `2024-01-${String(day).padStart(2, '0')}T18:00:00Z`);
+      }
+
+      const res = await history(january).expect(200);
+
+      expect(res.body).toHaveLength(20);
+      // 25 stored now, plus the 2 every test of this block starts with.
+      expect(res.headers['x-total-count']).toBe('27');
+    });
+
     it('requires authentication', async () => {
       await history(january, '').expect(401);
     });

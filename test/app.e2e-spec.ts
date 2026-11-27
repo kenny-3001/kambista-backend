@@ -185,6 +185,28 @@ describe('Kambista API (e2e)', () => {
       ]);
     });
 
+    it('pages the history by default instead of returning an unbounded list', async () => {
+      const { access_token: token } = await newUser('muchas@example.com');
+      for (let i = 1; i <= 21; i++) {
+        await exchange(token, {
+          monedaOrigen: 'USD',
+          monedaDestino: 'PEN',
+          monto: i,
+        }).expect(201);
+      }
+
+      const firstPage = await history(token).expect(200);
+      const secondPage = await history(token, { page: '2' }).expect(200);
+
+      expect(firstPage.body).toHaveLength(20);
+      expect(firstPage.headers['x-total-count']).toBe('21');
+      // The newest first: the last amount sent leads the first page.
+      expect(bodyOf<TransactionBody[]>(firstPage)[0].monto).toBe(21);
+      expect(bodyOf<TransactionBody[]>(secondPage).map((t) => t.monto)).toEqual(
+        [1],
+      );
+    });
+
     it('stores the password hashed and never returns it', async () => {
       const registered = await register('secreto@example.com').expect(201);
       const { res } = await login('secreto@example.com');

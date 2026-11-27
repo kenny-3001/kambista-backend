@@ -87,6 +87,8 @@ describe('MongoTransactionRepository (integration)', () => {
       );
 
     const january18 = HistoryPeriod.of('2024-01-18', '2024-01-18');
+    /** Large enough for every transaction these tests save. */
+    const FIRST_PAGE = { page: 1, limit: 100 };
 
     it('includes the whole day in Peru time and nothing outside it', async () => {
       await save('user-1', '2024-01-18T04:59:59.999Z'); // 17/01 23:59 Lima
@@ -97,6 +99,7 @@ describe('MongoTransactionRepository (integration)', () => {
       const { items, total } = await repository.findHistory(
         'user-1',
         january18,
+        FIRST_PAGE,
       );
 
       expect(items.map((t) => t.createdAt.toISOString())).toEqual([
@@ -110,7 +113,11 @@ describe('MongoTransactionRepository (integration)', () => {
       await save('user-1', '2024-01-18T15:00:00Z');
       await save('user-2', '2024-01-18T15:00:00Z');
 
-      const { items } = await repository.findHistory('user-2', january18);
+      const { items } = await repository.findHistory(
+        'user-2',
+        january18,
+        FIRST_PAGE,
+      );
 
       expect(items.map((t) => t.userId)).toEqual(['user-2']);
     });
@@ -118,8 +125,9 @@ describe('MongoTransactionRepository (integration)', () => {
     it('rebuilds complete transactions', async () => {
       await save('user-1', '2024-01-18T15:00:00Z', 175);
 
-      const [transaction] = (await repository.findHistory('user-1', january18))
-        .items;
+      const [transaction] = (
+        await repository.findHistory('user-1', january18, FIRST_PAGE)
+      ).items;
 
       expect(transaction).toMatchObject({
         userId: 'user-1',
@@ -177,6 +185,7 @@ describe('MongoTransactionRepository (integration)', () => {
         repository.findHistory(
           'user-1',
           HistoryPeriod.of('2024-02-01', '2024-02-29'),
+          FIRST_PAGE,
         ),
       ).resolves.toEqual({ items: [], total: 0 });
     });

@@ -10,7 +10,10 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import { HISTORY_MAX_LIMIT } from '../../application/use-cases/get-transaction-history.use-case';
+import {
+  HISTORY_DEFAULT_LIMIT,
+  HISTORY_MAX_LIMIT,
+} from '../../application/use-cases/get-transaction-history.use-case';
 import { HISTORY_DATE_MESSAGES } from '../../domain/value-objects/history-period';
 
 const DATE_FORMAT = /^\d{4}-\d{2}-\d{2}$/;
@@ -53,7 +56,7 @@ export class TransactionHistoryQuery {
     minimum: 1,
     example: 1,
     description:
-      'Paginación opcional. Sin `page` ni `limit` se devuelve todo el rango',
+      'Página a devolver (1 por defecto). El historial siempre viene paginado',
   })
   @Min(1, { message: 'La página debe ser un número entero mayor a 0' })
   @IsInt({ message: 'La página debe ser un número entero mayor a 0' })
@@ -65,7 +68,7 @@ export class TransactionHistoryQuery {
     minimum: 1,
     maximum: HISTORY_MAX_LIMIT,
     example: 20,
-    description: 'Tamaño de página (por defecto 20 si se envía `page`)',
+    description: `Tamaño de página (por defecto ${HISTORY_DEFAULT_LIMIT}, máximo ${HISTORY_MAX_LIMIT})`,
   })
   @Max(HISTORY_MAX_LIMIT, {
     message: `El límite debe ser un número entero entre 1 y ${HISTORY_MAX_LIMIT}`,

@@ -33,13 +33,11 @@ export class GetTransactionHistoryUseCase {
   }
 }
 
-/** Pagination is opt-in: without page or limit the whole period is returned. */
-function toPageRequest(
-  query: GetTransactionHistoryQuery,
-): PageRequest | undefined {
-  if (query.page === undefined && query.limit === undefined) {
-    return undefined;
-  }
+/**
+ * The history is always paginated, never an unbounded list: without page or
+ * limit it returns the first page with the default size.
+ */
+function toPageRequest(query: GetTransactionHistoryQuery): PageRequest {
   return {
     page: query.page ?? 1,
     limit: Math.min(query.limit ?? HISTORY_DEFAULT_LIMIT, HISTORY_MAX_LIMIT),

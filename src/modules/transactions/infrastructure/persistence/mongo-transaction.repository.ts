@@ -26,7 +26,7 @@ export class MongoTransactionRepository extends TransactionRepository {
   async findHistory(
     userId: string,
     period: HistoryPeriod,
-    page?: PageRequest,
+    page: PageRequest,
   ): Promise<Page<Transaction>> {
     // Served by the { userId, createdAt } index.
     const filter = {
@@ -34,13 +34,12 @@ export class MongoTransactionRepository extends TransactionRepository {
       createdAt: { $gte: period.from, $lt: period.until },
     };
 
-    let query = this.transactionModel
+    const query = this.transactionModel
       .find(filter)
       // _id breaks ties so pages never overlap or skip items.
-      .sort({ createdAt: -1, _id: -1 });
-    if (page) {
-      query = query.skip((page.page - 1) * page.limit).limit(page.limit);
-    }
+      .sort({ createdAt: -1, _id: -1 })
+      .skip((page.page - 1) * page.limit)
+      .limit(page.limit);
 
     const [documents, total] = await Promise.all([
       query.lean<TransactionDocument[]>().exec(),

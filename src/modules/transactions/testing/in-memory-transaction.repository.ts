@@ -14,7 +14,7 @@ export class InMemoryTransactionRepository extends TransactionRepository {
   findHistory(
     userId: string,
     period: HistoryPeriod,
-    page?: PageRequest,
+    page: PageRequest,
   ): Promise<Page<Transaction>> {
     const matching = this.transactions
       .filter(
@@ -25,9 +25,10 @@ export class InMemoryTransactionRepository extends TransactionRepository {
       )
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
-    const items = page
-      ? matching.slice((page.page - 1) * page.limit, page.page * page.limit)
-      : matching;
+    const items = matching.slice(
+      (page.page - 1) * page.limit,
+      page.page * page.limit,
+    );
     return Promise.resolve({ items, total: matching.length });
   }
 }

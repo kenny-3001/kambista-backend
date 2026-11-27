@@ -12,6 +12,7 @@ export abstract class TransactionRepository {
   abstract findHistory(
     userId: string,
     period: HistoryPeriod,
-    page?: PageRequest,
+    /** Always required: the history is never returned without a limit. */
+    page: PageRequest,
   ): Promise<Page<Transaction>>;
 }

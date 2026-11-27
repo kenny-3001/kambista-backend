@@ -85,7 +85,7 @@ El resultado se redondea a 2 decimales hacia arriba en la mitad (`ROUND_HALF_UP`
 - `startDate` y `endDate` (obligatorios, `AAAA-MM-DD`) son días completos en hora de Perú y ambos se incluyen: del 18 al 18 devuelve todo el día 18.
 - Las operaciones vienen de la más reciente a la más antigua.
 - `userId` (opcional) solo lo respeta el rol `admin`; sin él, el admin ve su propio historial. El rol `user` siempre ve el suyo.
-- Paginación opcional con `page` y `limit` (por defecto 20, máximo 100). El cuerpo sigue siendo el arreglo del enunciado y el total del rango llega en la cabecera `X-Total-Count`.
+- **Siempre paginado**, nunca una lista sin límite: `page` (1 por defecto) y `limit` (20 por defecto, máximo 100). El cuerpo sigue siendo el arreglo del enunciado y el total del rango llega en la cabecera `X-Total-Count`.
 
 ### Errores
 

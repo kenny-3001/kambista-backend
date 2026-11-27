@@ -90,12 +90,19 @@ describe('GetTransactionHistoryUseCase', () => {
       }
     });
 
-    it('returns the whole period, newest first, when no page is requested', async () => {
+    it('returns the first page, newest first, when no page is requested', async () => {
+      const findHistory = jest.spyOn(transactions, 'findHistory');
+
       const { items, total } = await getHistory.execute({
         requester: user,
         ...period,
       });
 
+      // Never an unbounded list: the default page size applies.
+      expect(findHistory).toHaveBeenCalledWith('user-1', expect.anything(), {
+        page: 1,
+        limit: HISTORY_DEFAULT_LIMIT,
+      });
       expect(items).toHaveLength(16);
       expect(total).toBe(16);
       expect(items[0].createdAt).toEqual(new Date('2024-01-27T15:00:00Z'));

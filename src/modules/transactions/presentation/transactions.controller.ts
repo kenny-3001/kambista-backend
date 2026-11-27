@@ -24,7 +24,10 @@ import type { AuthenticatedUser } from '../../auth/application/authenticated-use
 import { Role } from '../../auth/domain/role';
 import { CurrentUser } from '../../auth/presentation/decorators/current-user.decorator';
 import { CreateTransactionUseCase } from '../application/use-cases/create-transaction.use-case';
-import { GetTransactionHistoryUseCase } from '../application/use-cases/get-transaction-history.use-case';
+import {
+  GetTransactionHistoryUseCase,
+  HISTORY_DEFAULT_LIMIT,
+} from '../application/use-cases/get-transaction-history.use-case';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { TransactionHistoryQuery } from './dto/transaction-history.query';
 import {
@@ -96,8 +99,7 @@ export class TransactionsController {
   @Get('history')
   @ApiOperation({
     summary: 'Consultar el historial por rango de fechas',
-    description:
-      'Devuelve las transacciones del rango, de la más reciente a la más antigua. El rol `user` siempre ve las suyas; el `admin` puede indicar `userId` para ver las de otro usuario.',
+    description: `Devuelve las transacciones del rango, de la más reciente a la más antigua, paginadas (${HISTORY_DEFAULT_LIMIT} por página por defecto; el total va en \`X-Total-Count\`). El rol \`user\` siempre ve las suyas; el \`admin\` puede indicar \`userId\` para ver las de otro usuario.`,
   })
   @ApiOkResponse({
     type: [TransactionResponse],
