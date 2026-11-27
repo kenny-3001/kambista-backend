@@ -227,7 +227,7 @@ Los casos de uso se conectan a sus implementaciones en el módulo de Nest con `u
 
 - `helmet` pone las cabeceras estándar en toda respuesta: `X-Content-Type-Options: nosniff`, `X-Frame-Options`, `Strict-Transport-Security` y una política de contenido estricta. Además no se anuncia la tecnología del servidor (`X-Powered-By`).
 - `Cross-Origin-Resource-Policy: cross-origin`, porque el frontend está en otro origen y lee las respuestas por CORS.
-- La página de Swagger (`/docs`) ejecuta scripts y estilos propios, que la política estricta bloquearía: solo ella recibe una política de contenido relajada y conserva el resto de cabeceras.
+- La página de Swagger (`/docs`) también recibe la política estricta: carga sus scripts como archivos, sin scripts inline, así que funciona completa (incluido "Try it out"). Una prueba E2E lo vigila.
 
 ### Logging
 

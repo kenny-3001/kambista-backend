@@ -560,11 +560,16 @@ describe('Kambista API (e2e)', () => {
       expect(res.headers['cross-origin-resource-policy']).toBe('cross-origin');
     });
 
-    it('gives the docs page a policy that lets it run, with the other headers kept', async () => {
+    it('keeps the strict content policy on the docs page too', async () => {
       const res = await e2e.api().get('/docs/').expect(200);
 
-      expect(res.headers['content-security-policy']).toBeUndefined();
+      expect(res.headers['content-security-policy']).toContain(
+        "script-src 'self'",
+      );
       expect(res.headers['x-content-type-options']).toBe('nosniff');
+      // It works because every script of the page is a file, not inline.
+      expect(res.text).toContain('<script src=');
+      expect(res.text).not.toMatch(/<script(?![^>]*\ssrc=)[^>]*>/);
     });
 
     it('serves the API documentation', async () => {

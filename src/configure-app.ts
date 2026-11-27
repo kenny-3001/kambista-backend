@@ -1,46 +1,26 @@
 import { ConfigService } from '@nestjs/config';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import type { NextFunction, Request, Response } from 'express';
-import helmet, { type HelmetOptions } from 'helmet';
+import helmet from 'helmet';
 import { TOTAL_COUNT_HEADER } from './modules/transactions/presentation/transactions.controller';
 import type { LogFormat } from './shared/infrastructure/logging/app-logger';
 import {
   REQUEST_ID_HEADER,
   requestLogging,
 } from './shared/presentation/logging/request-logging.middleware';
-import {
-  SWAGGER_PATH,
-  setupSwagger,
-} from './shared/presentation/swagger/setup-swagger';
+import { setupSwagger } from './shared/presentation/swagger/setup-swagger';
 
 export const API_PREFIX = 'v1';
 
-// The frontend lives on another origin and reads these answers through CORS,
-// so the browser must not treat them as same-origin only.
-const CROSS_ORIGIN: HelmetOptions = {
-  crossOriginResourcePolicy: { policy: 'cross-origin' },
-};
-
-/** Security headers for the JSON API, with the strict default policy. */
-const apiSecurityHeaders = helmet(CROSS_ORIGIN);
-
 /**
- * The docs page (Swagger UI) runs inline scripts and styles, which the
- * strict policy of the API would block, so only it gets a relaxed one.
+ * Standard security headers (nosniff, no framing, HSTS and a strict content
+ * policy) on every answer, the docs page included: Swagger UI loads its
+ * scripts as files, so the strict policy does not block it. The frontend
+ * lives on another origin and reads these answers through CORS, so the
+ * browser must not treat them as same-origin only.
  */
-const docsSecurityHeaders = helmet({
-  ...CROSS_ORIGIN,
-  contentSecurityPolicy: false,
+const securityHeaders = helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
 });
-
-function securityHeaders(
-  request: Request,
-  response: Response,
-  next: NextFunction,
-): void {
-  const isDocs = request.path.startsWith(`/${SWAGGER_PATH}`);
-  (isDocs ? docsSecurityHeaders : apiSecurityHeaders)(request, response, next);
-}
 
 /**
  * Everything the HTTP app needs besides its modules: request logging,
