@@ -1,4 +1,4 @@
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import type { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose, { Model } from 'mongoose';
 import { EmailAlreadyRegisteredError } from '../../domain/errors/email-already-registered.error';
 import { UserNotFoundError } from '../../domain/errors/user-not-found.error';
@@ -7,9 +7,10 @@ import { User } from '../../domain/user';
 import { Email } from '../../domain/value-objects/email';
 import { MongoUserRepository } from './mongo-user.repository';
 import { UserDocument, UserSchema } from './user.schema';
-
-// The first run downloads the MongoDB binary used by mongodb-memory-server.
-const MONGO_STARTUP_TIMEOUT_MS = 120_000;
+import {
+  MONGO_STARTUP_TIMEOUT_MS,
+  startTestMongo,
+} from '../../../../shared/testing/test-mongo';
 
 describe('MongoUserRepository (integration)', () => {
   let mongo: MongoMemoryServer;
@@ -17,7 +18,7 @@ describe('MongoUserRepository (integration)', () => {
   let repository: MongoUserRepository;
 
   beforeAll(async () => {
-    mongo = await MongoMemoryServer.create();
+    mongo = await startTestMongo();
     await mongoose.connect(mongo.getUri());
     userModel = mongoose.model(UserDocument.name, UserSchema);
     await userModel.init(); // builds the unique email index

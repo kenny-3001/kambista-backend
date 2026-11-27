@@ -1,4 +1,4 @@
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import type { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose, { Model } from 'mongoose';
 import { Currency } from '../../domain/currency';
 import { Transaction } from '../../domain/transaction';
@@ -7,9 +7,10 @@ import { CurrencyPair } from '../../domain/value-objects/currency-pair';
 import { HistoryPeriod } from '../../domain/value-objects/history-period';
 import { MongoTransactionRepository } from './mongo-transaction.repository';
 import { TransactionDocument, TransactionSchema } from './transaction.schema';
-
-// The first run downloads the MongoDB binary used by mongodb-memory-server.
-const MONGO_STARTUP_TIMEOUT_MS = 120_000;
+import {
+  MONGO_STARTUP_TIMEOUT_MS,
+  startTestMongo,
+} from '../../../../shared/testing/test-mongo';
 
 describe('MongoTransactionRepository (integration)', () => {
   let mongo: MongoMemoryServer;
@@ -17,7 +18,7 @@ describe('MongoTransactionRepository (integration)', () => {
   let repository: MongoTransactionRepository;
 
   beforeAll(async () => {
-    mongo = await MongoMemoryServer.create();
+    mongo = await startTestMongo();
     await mongoose.connect(mongo.getUri());
     transactionModel = mongoose.model(
       TransactionDocument.name,

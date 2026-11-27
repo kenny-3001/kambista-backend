@@ -1,4 +1,4 @@
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import type { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose, { Model } from 'mongoose';
 import { RefreshToken } from '../../domain/refresh-token';
 import { MongoRefreshTokenRepository } from './mongo-refresh-token.repository';
@@ -6,9 +6,10 @@ import {
   RefreshTokenDocument,
   RefreshTokenSchema,
 } from './refresh-token.schema';
-
-// The first run downloads the MongoDB binary used by mongodb-memory-server.
-const MONGO_STARTUP_TIMEOUT_MS = 120_000;
+import {
+  MONGO_STARTUP_TIMEOUT_MS,
+  startTestMongo,
+} from '../../../../shared/testing/test-mongo';
 
 describe('MongoRefreshTokenRepository (integration)', () => {
   const NOW = new Date('2024-01-18T15:00:00Z');
@@ -18,7 +19,7 @@ describe('MongoRefreshTokenRepository (integration)', () => {
   let repository: MongoRefreshTokenRepository;
 
   beforeAll(async () => {
-    mongo = await MongoMemoryServer.create();
+    mongo = await startTestMongo();
     await mongoose.connect(mongo.getUri());
     tokenModel = mongoose.model(RefreshTokenDocument.name, RefreshTokenSchema);
     await tokenModel.init(); // builds the unique and TTL indexes

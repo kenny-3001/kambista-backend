@@ -1,13 +1,14 @@
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import type { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose, { Model } from 'mongoose';
 import {
   LoginAttemptDocument,
   LoginAttemptSchema,
 } from './login-attempt.schema';
 import { MongoLoginAttemptCounter } from './mongo-login-attempt-counter';
-
-// The first run downloads the MongoDB binary used by mongodb-memory-server.
-const MONGO_STARTUP_TIMEOUT_MS = 120_000;
+import {
+  MONGO_STARTUP_TIMEOUT_MS,
+  startTestMongo,
+} from '../../../../shared/testing/test-mongo';
 
 describe('MongoLoginAttemptCounter (integration)', () => {
   const WINDOW_MS = 15 * 60_000;
@@ -18,7 +19,7 @@ describe('MongoLoginAttemptCounter (integration)', () => {
   let counter: MongoLoginAttemptCounter;
 
   beforeAll(async () => {
-    mongo = await MongoMemoryServer.create();
+    mongo = await startTestMongo();
     await mongoose.connect(mongo.getUri());
     attemptModel = mongoose.model(
       LoginAttemptDocument.name,

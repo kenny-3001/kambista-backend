@@ -1,4 +1,4 @@
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import type { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose, { Model } from 'mongoose';
 import { ExchangeRate } from '../../domain/exchange-rate';
 import { CachedExchangeRateRepository } from './cached-exchange-rate.repository';
@@ -7,9 +7,10 @@ import {
   ExchangeRateSchema,
 } from './exchange-rate.schema';
 import { MongoExchangeRateRepository } from './mongo-exchange-rate.repository';
-
-// The first run downloads the MongoDB binary used by mongodb-memory-server.
-const MONGO_STARTUP_TIMEOUT_MS = 120_000;
+import {
+  MONGO_STARTUP_TIMEOUT_MS,
+  startTestMongo,
+} from '../../../../shared/testing/test-mongo';
 
 describe('MongoExchangeRateRepository (integration)', () => {
   let mongo: MongoMemoryServer;
@@ -17,7 +18,7 @@ describe('MongoExchangeRateRepository (integration)', () => {
   let repository: MongoExchangeRateRepository;
 
   beforeAll(async () => {
-    mongo = await MongoMemoryServer.create();
+    mongo = await startTestMongo();
     await mongoose.connect(mongo.getUri());
     rateModel = mongoose.model(ExchangeRateDocument.name, ExchangeRateSchema);
     await rateModel.init();
