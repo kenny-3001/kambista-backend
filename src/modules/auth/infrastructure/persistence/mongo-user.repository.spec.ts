@@ -101,4 +101,59 @@ describe('MongoUserRepository (integration)', () => {
       EmailAlreadyRegisteredError,
     );
   });
+
+  describe('search', () => {
+    const add = (name: string, email: string) =>
+      repository.create(
+        User.register({ name, email: Email.create(email), passwordHash: 'h' }),
+      );
+
+    const emails = async (params: { text?: string; limit: number }) =>
+      (await repository.search(params)).map((user) => user.email.value);
+
+    it('matches part of the name or the email, ignoring case', async () => {
+      await add('Juan Pérez', 'juan@example.com');
+      await add('Rosa Díaz', 'rosa@corp.pe');
+      await add('Beto Ríos', 'beto@example.com');
+
+      await expect(emails({ text: 'JUAN', limit: 10 })).resolves.toEqual([
+        'juan@example.com',
+      ]);
+      await expect(emails({ text: 'CORP', limit: 10 })).resolves.toEqual([
+        'rosa@corp.pe',
+      ]);
+    });
+
+    it('takes the search text literally, not as a pattern', async () => {
+      await add('Ana', 'a.b@example.com');
+      await add('Beto', 'axb@example.com');
+
+      await expect(emails({ text: 'a.b', limit: 10 })).resolves.toEqual([
+        'a.b@example.com',
+      ]);
+      await expect(emails({ text: '(', limit: 10 })).resolves.toEqual([]);
+    });
+
+    it('orders by name ignoring case and accents, then by email', async () => {
+      await add('beto', 'beto@example.com');
+      await add('Ángel', 'angel@example.com');
+      await add('Ana', 'z@example.com');
+      await add('ana', 'a@example.com');
+
+      await expect(emails({ limit: 10 })).resolves.toEqual([
+        'a@example.com',
+        'z@example.com',
+        'angel@example.com',
+        'beto@example.com',
+      ]);
+    });
+
+    it('returns at most the requested number of users', async () => {
+      for (let i = 0; i < 5; i++) {
+        await add(`User ${i}`, `u${i}@example.com`);
+      }
+
+      await expect(emails({ limit: 3 })).resolves.toHaveLength(3);
+    });
+  });
 });
