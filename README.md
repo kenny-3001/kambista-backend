@@ -7,7 +7,10 @@ Stack: NestJS 11, TypeScript (estricto), MongoDB 7 con Mongoose, Jest y Swagger.
 ## Requisitos
 
 - Node.js 22 o superior.
-- Docker, para MongoDB. Las pruebas no lo necesitan: usan una base de datos en memoria.
+- npm (incluido con Node.js).
+- MongoDB 7: lo más simple es levantarlo con Docker (`docker compose up -d`). También sirve un MongoDB 7 propio, indicando su dirección en `MONGO_URI`.
+
+Las pruebas no necesitan Docker ni MongoDB: usan una base de datos en memoria.
 
 ## Levantar en local
 
@@ -82,7 +85,7 @@ El resultado se redondea a 2 decimales hacia arriba en la mitad (`ROUND_HALF_UP`
 
 ### Historial
 
-- `startDate` y `endDate` (obligatorios, `AAAA-MM-DD`) son días completos en hora de Perú y ambos se incluyen: del 18 al 18 devuelve todo el día 18.
+- `startDate` y `endDate` (obligatorios, `AAAA-MM-DD`) son días completos en hora de Perú y ambos se incluyen: del 18 al 18 devuelve todo el día 18. Otro formato, como una fecha con hora (`2026-11-26T00:00:00Z`), responde `400` con un mensaje que indica el formato esperado.
 - Las operaciones vienen de la más reciente a la más antigua.
 - `userId` (opcional) solo lo respeta el rol `admin`; sin él, el admin ve su propio historial. El rol `user` siempre ve el suyo.
 - **Siempre paginado**, nunca una lista sin límite: `page` (1 por defecto) y `limit` (20 por defecto, máximo 100). El cuerpo sigue siendo el arreglo del enunciado y el total del rango llega en la cabecera `X-Total-Count`.
