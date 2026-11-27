@@ -114,6 +114,7 @@ Todos los errores responden con el mismo formato:
 | ------ | ----------------------------------------------------------------------------------------------- |
 | 400    | `VALIDATION_ERROR`, `SAME_CURRENCY`, `INVALID_AMOUNT`, `INVALID_HISTORY_PERIOD`, `INVALID_JSON` |
 | 401    | `MISSING_ACCESS_TOKEN`, `INVALID_ACCESS_TOKEN`, `INVALID_CREDENTIALS`, `INVALID_REFRESH_TOKEN`  |
+| 403    | `INSUFFICIENT_PERMISSIONS`: la ruta es solo para `admin` (`GET /users`)                         |
 | 404    | `ROUTE_NOT_FOUND`                                                                               |
 | 409    | `EMAIL_ALREADY_REGISTERED`                                                                      |
 | 413    | `PAYLOAD_TOO_LARGE`                                                                             |
@@ -232,7 +233,6 @@ Los casos de uso se conectan a sus implementaciones en el módulo de Nest con `u
 ### Logging
 
 - El logger es el de Nest (`ConsoleLogger`) en modo JSON o legible, más un middleware propio por petición; no se usa pino ni otra librería de logging. Si hiciera falta mayor volumen o transportes, se cambiaría detrás de la misma interfaz de Nest.
-
 - Una línea por petición con método, ruta (sin la query), estado, duración, usuario e **ID de petición**. El ID se devuelve en la cabecera `X-Request-Id` y acompaña a los errores 500 en el log, para encontrar un error a partir de lo que reporta un usuario.
 - En producción cada línea es un objeto JSON, listo para un recolector de logs.
 - Nunca se registran cuerpos, cabeceras ni tokens.
