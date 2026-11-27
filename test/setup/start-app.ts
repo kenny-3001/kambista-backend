@@ -1,3 +1,4 @@
+import type { LoggerService } from '@nestjs/common';
 import { getConnectionToken } from '@nestjs/mongoose';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
@@ -26,7 +27,7 @@ export interface E2EApp {
  * service nor depend on its rate.
  */
 export async function startApp(
-  options: { providerDown?: Error } = {},
+  options: { providerDown?: Error; logger?: LoggerService } = {},
 ): Promise<E2EApp> {
   const provider = new StubExchangeRateProvider();
   if (options.providerDown) {
@@ -38,7 +39,7 @@ export async function startApp(
     .compile();
 
   const app = moduleRef.createNestApplication<NestExpressApplication>({
-    logger: false,
+    logger: options.logger ?? false,
   });
   configureApp(app);
   await app.init();

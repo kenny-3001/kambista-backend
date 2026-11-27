@@ -415,7 +415,7 @@ describe('Kambista API (e2e)', () => {
   });
 
   describe('HTTP setup, as in production', () => {
-    it('lets the frontend read the pagination total and the retry delay', async () => {
+    it('lets the frontend read the pagination total, the retry delay and the request id', async () => {
       const { access_token: token } = await newUser('cors@example.com');
 
       const res = await history(token)
@@ -426,7 +426,7 @@ describe('Kambista API (e2e)', () => {
         'http://localhost:5173',
       );
       expect(res.headers['access-control-expose-headers']).toBe(
-        'X-Total-Count,Retry-After',
+        'X-Total-Count,Retry-After,X-Request-Id',
       );
       expect(res.headers['x-powered-by']).toBeUndefined();
     });

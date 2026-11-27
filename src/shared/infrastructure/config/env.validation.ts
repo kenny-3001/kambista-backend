@@ -1,4 +1,5 @@
 import * as Joi from 'joi';
+import { LOG_FORMATS, LOG_LEVEL_NAMES } from '../logging/app-logger';
 
 /** Placeholder published in .env.example: fine locally, never in production. */
 export const EXAMPLE_JWT_SECRET =
@@ -12,6 +13,17 @@ export const envValidationSchema = Joi.object({
     .valid('development', 'production', 'test')
     .default('development'),
   PORT: Joi.number().port().default(3000),
+  // json in production (one object per line, for log collectors), readable
+  // text otherwise.
+  LOG_FORMAT: Joi.string()
+    .valid(...LOG_FORMATS)
+    .default((env: { NODE_ENV?: string }) =>
+      env.NODE_ENV === 'production' ? 'json' : 'pretty',
+    ),
+  // The least important level written: 'log' leaves out debug and verbose.
+  LOG_LEVEL: Joi.string()
+    .valid(...LOG_LEVEL_NAMES)
+    .default('log'),
   MONGO_URI: Joi.string()
     .uri({ scheme: ['mongodb', 'mongodb+srv'] })
     .required(),

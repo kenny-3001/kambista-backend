@@ -19,6 +19,9 @@ Object.assign(process.env, {
   JWT_SECRET: 'e2e-secret-long-enough-for-the-validation-rule',
   JWT_EXPIRES_IN: '15m',
   CORS_ORIGIN: 'http://localhost:5173',
+  // As in production: request logs are structured entries.
+  LOG_FORMAT: 'json',
+  LOG_LEVEL: 'log',
   // The first refresh runs at startup; no other one during the tests.
   EXCHANGE_RATE_REFRESH_INTERVAL_MS: String(60 * 60 * 1000),
   LOGIN_MAX_FAILED_ATTEMPTS: '5',

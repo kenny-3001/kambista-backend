@@ -26,7 +26,36 @@ describe('envValidationSchema', () => {
       EXCHANGE_RATE_API_URL: 'https://api.apis.net.pe/v1/tipo-cambio-sunat',
       EXCHANGE_RATE_REFRESH_INTERVAL_MS: 30_000,
       EXCHANGE_RATE_TIMEOUT_MS: 5_000,
+      LOG_FORMAT: 'pretty',
+      LOG_LEVEL: 'log',
     });
+  });
+
+  it('logs as JSON in production unless told otherwise', () => {
+    const format = (env: object) =>
+      (
+        envValidationSchema.validate({ ...validEnv, ...env }).value as {
+          LOG_FORMAT: string;
+        }
+      ).LOG_FORMAT;
+
+    expect(format({ NODE_ENV: 'production' })).toBe('json');
+    expect(format({ NODE_ENV: 'production', LOG_FORMAT: 'pretty' })).toBe(
+      'pretty',
+    );
+    expect(format({ NODE_ENV: 'development', LOG_FORMAT: 'json' })).toBe(
+      'json',
+    );
+  });
+
+  it.each([
+    ['LOG_FORMAT', 'xml'],
+    ['LOG_LEVEL', 'fatal'],
+    ['LOG_LEVEL', 'info'],
+  ])('rejects %s=%s', (key, value) => {
+    expect(
+      envValidationSchema.validate({ ...validEnv, [key]: value }).error,
+    ).toBeDefined();
   });
 
   it('converts numeric settings provided as text (as in a .env file)', () => {

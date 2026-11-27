@@ -12,6 +12,7 @@ import { IsDefined, IsInt, IsString, Min } from 'class-validator';
 import request from 'supertest';
 import type { App } from 'supertest/types';
 import { DomainError, DomainErrorType } from '../../domain/domain-error';
+import { requestLogging } from '../logging/request-logging.middleware';
 import { createValidationPipe } from '../validation/create-validation-pipe';
 import { ApiExceptionFilter } from './api-exception.filter';
 
@@ -82,6 +83,14 @@ describe('ApiExceptionFilter (integration)', () => {
     }).compile();
 
     app = moduleRef.createNestApplication();
+    // As in the app: every request carries an id (its own log is not checked here).
+    app.use(
+      requestLogging('json', {
+        log: () => {},
+        error: () => {},
+        warn: () => {},
+      }),
+    );
     await app.init();
   });
 
@@ -191,8 +200,11 @@ describe('ApiExceptionFilter (integration)', () => {
     });
   });
 
-  it('hides unexpected failures from the client but logs them', async () => {
-    const res = await server().get('/probe/crash').expect(500);
+  it('hides unexpected failures from the client but logs them, with the request id', async () => {
+    const res = await server()
+      .get('/probe/crash?token=secreto')
+      .set('X-Request-Id', 'crash-1')
+      .expect(500);
 
     expect(res.body).toEqual({
       statusCode: 500,
@@ -201,7 +213,7 @@ describe('ApiExceptionFilter (integration)', () => {
     });
     expect(JSON.stringify(res.body)).not.toContain('hunter2');
     expect(loggedError).toHaveBeenCalledWith(
-      'GET /probe/crash falló de forma inesperada',
+      'GET /probe/crash falló de forma inesperada (requestId crash-1)',
       expect.stringContaining('database password is hunter2'),
     );
   });

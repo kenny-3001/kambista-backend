@@ -9,6 +9,7 @@ import {
 import type { Request, Response } from 'express';
 import { DomainError, DomainErrorType } from '../../domain/domain-error';
 import { ApiErrorBody } from '../errors/api-error';
+import { requestIdOf } from '../logging/request-logging.middleware';
 import { RequestValidationError } from '../validation/request-validation.error';
 
 const STATUS_BY_TYPE: Record<DomainErrorType, HttpStatus> = {
@@ -115,8 +116,12 @@ export class ApiExceptionFilter implements ExceptionFilter {
       return this.fromStatus(exception.getStatus());
     }
 
+    // The request id lets this error be found from what the user reports.
+    // Path only: like the request log, never the query string.
+    const requestId = requestIdOf(request);
+    const path = request.originalUrl.split('?')[0];
     this.logger.error(
-      `${request.method} ${request.url} falló de forma inesperada`,
+      `${request.method} ${path} falló de forma inesperada${requestId ? ` (requestId ${requestId})` : ''}`,
       exception instanceof Error ? exception.stack : String(exception),
     );
     return INTERNAL_ERROR;
