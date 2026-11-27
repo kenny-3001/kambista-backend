@@ -223,6 +223,12 @@ Los casos de uso se conectan a sus implementaciones en el módulo de Nest con `u
 - Tras **5 logins fallidos por email e IP en 15 minutos**, se responde `429 TOO_MANY_LOGIN_ATTEMPTS` con `Retry-After`, incluso con la contraseña correcta. Un login exitoso reinicia el contador.
 - La clave es email + IP: un atacante no puede bloquear a la víctima desde otra dirección ni probar muchas contraseñas desde la suya. El contador es atómico en MongoDB (no se puede esquivar con peticiones simultáneas) y se borra solo al vencer.
 
+### Cabeceras de seguridad
+
+- `helmet` pone las cabeceras estándar en toda respuesta: `X-Content-Type-Options: nosniff`, `X-Frame-Options`, `Strict-Transport-Security` y una política de contenido estricta. Además no se anuncia la tecnología del servidor (`X-Powered-By`).
+- `Cross-Origin-Resource-Policy: cross-origin`, porque el frontend está en otro origen y lee las respuestas por CORS.
+- La página de Swagger (`/docs`) ejecuta scripts y estilos propios, que la política estricta bloquearía: solo ella recibe una política de contenido relajada y conserva el resto de cabeceras.
+
 ### Logging
 
 

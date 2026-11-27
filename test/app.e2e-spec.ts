@@ -547,6 +547,26 @@ describe('Kambista API (e2e)', () => {
       expect(res.headers['x-powered-by']).toBeUndefined();
     });
 
+    it('sets the standard security headers on the API', async () => {
+      const res = await e2e.api().get('/v1/exchange-rate').expect(401);
+
+      expect(res.headers['x-content-type-options']).toBe('nosniff');
+      expect(res.headers['x-frame-options']).toBe('SAMEORIGIN');
+      expect(res.headers['strict-transport-security']).toBeDefined();
+      expect(res.headers['content-security-policy']).toContain(
+        "default-src 'self'",
+      );
+      // The frontend is another origin: its reads must not be blocked.
+      expect(res.headers['cross-origin-resource-policy']).toBe('cross-origin');
+    });
+
+    it('gives the docs page a policy that lets it run, with the other headers kept', async () => {
+      const res = await e2e.api().get('/docs/').expect(200);
+
+      expect(res.headers['content-security-policy']).toBeUndefined();
+      expect(res.headers['x-content-type-options']).toBe('nosniff');
+    });
+
     it('serves the API documentation', async () => {
       const res = await e2e.api().get('/docs-json').expect(200);
 
