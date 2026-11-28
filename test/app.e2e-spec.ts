@@ -456,7 +456,7 @@ describe('Kambista API (e2e)', () => {
       expectError(reversed, 400, 'INVALID_HISTORY_PERIOD');
     });
 
-    it('asks for a password with at least 8 characters, a letter and a number', async () => {
+    it('asks for a password with at least 8 characters, a letter, a number and no spaces', async () => {
       const attempt = (password: string) =>
         e2e.api().post('/v1/auth/register').send({
           nombre: 'Juan Pérez',
@@ -468,6 +468,7 @@ describe('Kambista API (e2e)', () => {
         ['corta1', 'La contraseña debe tener al menos 8 caracteres'],
         ['12345678', 'La contraseña debe tener al menos una letra'],
         ['contraseña', 'La contraseña debe tener al menos un número'],
+        ['MiClave2024 ', 'La contraseña no puede tener espacios'],
       ]) {
         const body = expectError(
           await attempt(password),

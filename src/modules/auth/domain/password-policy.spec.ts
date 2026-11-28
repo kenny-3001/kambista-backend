@@ -26,6 +26,9 @@ describe('assertValidPassword', () => {
       'contraseña',
       PASSWORD_MESSAGES.noDigit,
     ],
+    ['a space in the middle', 'mi clave 2024', PASSWORD_MESSAGES.hasSpaces],
+    ['a space at the end', 'MiClave2024 ', PASSWORD_MESSAGES.hasSpaces],
+    ['a tab', 'MiClave\t2024', PASSWORD_MESSAGES.hasSpaces],
   ])('rejects a password with %s', (_label, password, message) => {
     expect(() => assertValidPassword(password)).toThrow(
       new InvalidPasswordError(message),

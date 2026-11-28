@@ -11,11 +11,14 @@ export const PASSWORD_MAX_BYTES = 72;
 /** Any letter, accented ones and ñ included. */
 export const PASSWORD_LETTER = /\p{L}/u;
 export const PASSWORD_DIGIT = /[0-9]/;
+/** No whitespace anywhere: a stray space would make the password hard to type again. */
+export const PASSWORD_WITHOUT_SPACES = /^\S*$/;
 
 export const PASSWORD_MESSAGES = {
   tooShort: `La contraseña debe tener al menos ${PASSWORD_MIN_LENGTH} caracteres`,
   noLetter: 'La contraseña debe tener al menos una letra',
   noDigit: 'La contraseña debe tener al menos un número',
+  hasSpaces: 'La contraseña no puede tener espacios',
   tooLong: `La contraseña es demasiado larga: máximo ${PASSWORD_MAX_BYTES} caracteres (las letras con tilde y la ñ cuentan como 2)`,
 } as const;
 
@@ -33,6 +36,9 @@ export function assertValidPassword(plainPassword: string): void {
   }
   if (!PASSWORD_DIGIT.test(plainPassword)) {
     throw new InvalidPasswordError(PASSWORD_MESSAGES.noDigit);
+  }
+  if (!PASSWORD_WITHOUT_SPACES.test(plainPassword)) {
+    throw new InvalidPasswordError(PASSWORD_MESSAGES.hasSpaces);
   }
   if (passwordByteLength(plainPassword) > PASSWORD_MAX_BYTES) {
     throw new InvalidPasswordError(PASSWORD_MESSAGES.tooLong);

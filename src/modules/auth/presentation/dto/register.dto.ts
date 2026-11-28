@@ -13,6 +13,7 @@ import {
   PASSWORD_LETTER,
   PASSWORD_MESSAGES,
   PASSWORD_MIN_LENGTH,
+  PASSWORD_WITHOUT_SPACES,
 } from '../../domain/password-policy';
 import { FitsPasswordBytes } from './fits-password-bytes.validator';
 
@@ -39,9 +40,10 @@ export class RegisterDto {
     example: 'MiClave2024',
     minLength: PASSWORD_MIN_LENGTH,
     description:
-      'Entre 8 y 72 caracteres (las letras con tilde y la ñ cuentan como 2), con al menos una letra y un número',
+      'Entre 8 y 72 caracteres (las letras con tilde y la ñ cuentan como 2), con al menos una letra y un número, y sin espacios',
   })
   @FitsPasswordBytes({ message: PASSWORD_MESSAGES.tooLong })
+  @Matches(PASSWORD_WITHOUT_SPACES, { message: PASSWORD_MESSAGES.hasSpaces })
   @Matches(PASSWORD_DIGIT, { message: PASSWORD_MESSAGES.noDigit })
   @Matches(PASSWORD_LETTER, { message: PASSWORD_MESSAGES.noLetter })
   @MinLength(PASSWORD_MIN_LENGTH, { message: PASSWORD_MESSAGES.tooShort })

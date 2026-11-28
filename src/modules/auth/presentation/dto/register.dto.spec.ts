@@ -32,6 +32,7 @@ describe('RegisterDto password', () => {
   it.each([
     ['without a letter', '12345678', PASSWORD_MESSAGES.noLetter],
     ['without a digit', 'contraseña', PASSWORD_MESSAGES.noDigit],
+    ['with a space', 'MiClave 2024', PASSWORD_MESSAGES.hasSpaces],
   ])('rejects a password %s', (_label, password, message) => {
     expect(passwordErrors(password)).toEqual([message]);
   });
