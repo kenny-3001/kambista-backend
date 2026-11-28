@@ -4,6 +4,14 @@ API de cambio de divisas **USD ⇄ PEN** con el tipo de cambio oficial de SUNAT.
 
 Stack: NestJS 11, TypeScript (estricto), MongoDB 7 con Mongoose, Jest y Swagger. El frontend está en [kambista-frontend](https://github.com/kenny-3001/kambista-frontend).
 
+## Prueba técnica
+
+Este repositorio es la solución a la prueba técnica Fullstack de Kambista y sigue lo que pide su enunciado.
+
+- **Inicio:** recibí el enunciado por correo el 24 de noviembre de 2026 a las 8:00.
+- **Plazo:** las instrucciones de entrega indican un tiempo estimado de 5 días desde el inicio, es decir, hasta el 29 de noviembre de 2026.
+- **Entrega:** 28 de noviembre de 2026, dentro del plazo.
+
 ## Requisitos
 
 - Node.js 22 o superior.
