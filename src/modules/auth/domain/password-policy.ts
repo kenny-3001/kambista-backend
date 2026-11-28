@@ -22,8 +22,18 @@ export const PASSWORD_MESSAGES = {
   tooLong: `La contraseña es demasiado larga: máximo ${PASSWORD_MAX_BYTES} caracteres (las letras con tilde y la ñ cuentan como 2)`,
 } as const;
 
+/**
+ * The same password can arrive in two Unicode forms: "ñ" as one character
+ * (NFC) or as "n" plus a combining tilde (NFD), as some macOS and iOS
+ * keyboards send it. Passwords are always handled in NFC, so both forms are
+ * the same password.
+ */
+export function normalizePassword(plainPassword: string): string {
+  return plainPassword.normalize('NFC');
+}
+
 export function passwordByteLength(plainPassword: string): number {
-  return new TextEncoder().encode(plainPassword).length;
+  return new TextEncoder().encode(normalizePassword(plainPassword)).length;
 }
 
 /** Single source of truth for password rules, shared by every entry point. */

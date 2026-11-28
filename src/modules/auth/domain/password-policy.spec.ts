@@ -35,6 +35,12 @@ describe('assertValidPassword', () => {
     );
   });
 
+  it('measures the limit in the composed form, whatever form arrives', () => {
+    // 35 × "ñ" + "1a" is 72 bytes composed, 107 decomposed (n + tilde).
+    const decomposed = ('ñ'.repeat(35) + '1a').normalize('NFD');
+    expect(() => assertValidPassword(decomposed)).not.toThrow();
+  });
+
   it('counts ñ and accented letters as letters', () => {
     expect(() => assertValidPassword('ñññññññ1')).not.toThrow();
   });
